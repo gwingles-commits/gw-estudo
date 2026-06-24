@@ -149,7 +149,10 @@
     .pr-fb-stars span.on { animation: pr-pop .4s forwards; }
     @keyframes pr-pop { 60%{transform:scale(1.35)} 100%{opacity:1;transform:scale(1)} }
     .pr-nota { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; margin-top: 4px; }
-    .pr-aluno { font-size: 1.05rem; margin-top: 8px; }
+    .pr-aluno { font-size: 1.35rem; margin-top: 10px; font-family: 'Baloo 2', cursive; line-height: 1.3; }
+    .pr-cap { font-size: .75rem; color: #9385b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 14px; }
+    .pr-dica { background: #FFF7D6; color: #7a5b00; border-radius: 12px; padding: 10px 14px;
+      font-size: .95rem; margin-top: 14px; display: inline-block; }
     .pr-next { margin-top: 16px; background: var(--yellow); color: var(--text); border: none;
       font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 800; padding: 13px 30px; border-radius: 24px;
       cursor: pointer; box-shadow: 0 6px 18px rgba(255,217,61,.5); }
@@ -512,16 +515,52 @@
     document.getElementById('pr-mic').onclick = _prToggle;
   }
 
-  function _prFeedback(nota, data) {
+  function _prScoreW(w) {
+    return (w && w.PronunciationAssessment && typeof w.PronunciationAssessment.AccuracyScore === 'number')
+      ? w.PronunciationAssessment.AccuracyScore : 100;
+  }
+
+  function _prFeedback(nota, r0) {
     const fb = document.getElementById('pr-fb');
     const qtd = _prEstrelas(nota); _prStars += qtd;
     document.querySelector('.pr-stars').textContent = '⭐ ' + _prStars;
     let s = ''; for (let i = 0; i < 3; i++) s += `<span>${i < qtd ? '⭐' : '☆'}</span>`;
-    const tr = data && (data.Transcription || data.transcription || data.text);
+
+    const words = r0 && r0.WordFeedback;
+
+    // Frase colorida palavra a palavra (verde >=90 / amarelo >=70 / vermelho <70)
+    let fraseHtml = '';
+    if (Array.isArray(words) && words.length) {
+      const span = words.map(w =>
+        `<span style="color:${_prCor(_prScoreW(w))}">${w.Word}</span>`
+      ).join(' ');
+      fraseHtml = `<div class="pr-cap">sua fala</div><div class="pr-aluno">${span}</div>`;
+    } else {
+      const tr = r0 && (r0.Transcription || r0.transcription || r0.text);
+      if (tr) fraseHtml = `<div class="pr-cap">sua fala</div><div class="pr-aluno">${tr}</div>`;
+    }
+
+    // Dica de ouro: pior palavra + som mais fraco dela
+    let dicaHtml = '';
+    if (Array.isArray(words) && words.length) {
+      const pior = words.reduce((a, b) => _prScoreW(b) < _prScoreW(a) ? b : a);
+      if (_prScoreW(pior) < 90) {
+        let som = '';
+        const phs = (pior.Phonemes || []).filter(p => p && p.PronunciationAssessment);
+        if (phs.length) {
+          const pp = phs.reduce((a, b) =>
+            b.PronunciationAssessment.AccuracyScore < a.PronunciationAssessment.AccuracyScore ? b : a);
+          if (pp.PronunciationAssessment.AccuracyScore < 80) som = ` — capricha no som “${pp.Phoneme}”`;
+        }
+        dicaHtml = `<div class="pr-dica">💡 Treina de novo a palavra <b>${pior.Word}</b>${som}</div>`;
+      }
+    }
+
     fb.innerHTML = `
       <div class="pr-fb-stars">${s}</div>
       <div class="pr-nota" style="color:${_prCor(nota)}">${nota}</div>
-      ${tr ? `<div class="pr-aluno">Você disse: <b>${tr}</b></div>` : ''}
+      ${fraseHtml}
+      ${dicaHtml}
       <button class="pr-next" id="pr-next">${_prIdx + 1 < _prFrases.length ? 'Próxima →' : '🎉 Recomeçar'}</button>`;
     fb.querySelectorAll('.pr-fb-stars span').forEach((el, i) => { if (i < qtd) setTimeout(() => el.classList.add('on'), 120 * i); });
     _prBip(nota);
@@ -529,8 +568,6 @@
       if (_prIdx + 1 < _prFrases.length) { _prIdx++; _prRender(); }
       else { _prIdx = 0; _prStars = 0; _prRender(); }
     };
-    // v2 (feedback rico): com 1 resposta real do /audioquiz dá pra pintar a
-    // frase palavra a palavra e mostrar a "dica de ouro" do fonema mais fraco.
   }
 
   async function _prToggle() {
@@ -566,9 +603,10 @@
         body: JSON.stringify({ 'Audio Url': url, 'frase': _prFrases[_prIdx].frase })
       });
       const data = await r.json();
-      const nota = _prNota(data); hint.textContent = '';
+      const r0 = Array.isArray(data) ? data[0] : data;
+      const nota = _prNota(r0); hint.textContent = '';
       if (nota == null) { hint.textContent = 'Recebi a resposta mas não achei a nota.'; console.log('audioquiz:', data); return; }
-      _prFeedback(nota, data);
+      _prFeedback(nota, r0);
     } catch (e) { console.error(e); hint.textContent = 'Deu um problema ao avaliar. Tenta de novo.'; }
   }
 
