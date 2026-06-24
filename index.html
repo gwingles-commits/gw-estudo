@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GW Inglês</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6C3FC5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="GW Inglês" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --purple: #6C3FC5; --yellow: #FFD93D; --green: #4CAF77;
+      --pink: #FF6B9D; --blue: #3BADE8; --orange: #FF8C42;
+      --bg: #F5F0FF; --card: #FFFFFF; --text: #2D1B6B; --radius: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, var(--purple) 0%, #9B59E8 100%);
+      padding: 28px 24px 36px; text-align: center; position: relative; overflow: hidden;
+    }
+    header::before {
+      content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+      height: 40px; background: var(--bg); border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
+    .logo-text { font-family: 'Baloo 2', cursive; font-size: clamp(2rem,6vw,3.2rem); font-weight: 800; color: #fff; }
+    .logo-text span { color: var(--yellow); }
+    .subtitle { color: rgba(255,255,255,.85); font-size: 1.05rem; margin-top: 4px; }
+
+    /* LOADING / ERROR */
+    #loading, #error-box { text-align: center; padding: 60px 20px; font-size: 1.2rem; color: var(--purple); }
+    .spinner { width: 48px; height: 48px; border: 5px solid #ddd; border-top-color: var(--purple);
+      border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #error-box { color: #c0392b; display: none; }
+
+    /* LESSON TITLE */
+    #lesson-title { text-align: center; padding: 32px 20px 8px; display: none; }
+    #lesson-title h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.6rem,5vw,2.4rem); font-weight: 800; color: var(--purple); }
+    .badge { display: inline-block; background: var(--yellow); color: var(--text); font-weight: 900;
+      font-size: .8rem; padding: 3px 14px; border-radius: 20px; margin-top: 6px; text-transform: uppercase; }
+
+    /* TURMA PAGE */
+    #turma-page { display: none; max-width: 860px; margin: 0 auto; padding: 0 16px 60px; }
+    #turma-page h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple);
+      text-align: center; padding: 32px 0 20px; }
+    .turma-badge { display: inline-block; background: var(--purple); color: #fff; font-weight: 900;
+      font-size: .9rem; padding: 4px 18px; border-radius: 20px; margin-bottom: 24px; }
+    .licoes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+    .licao-card {
+      background: var(--card); border-radius: var(--radius); padding: 28px 20px;
+      text-align: center; cursor: pointer; border: 2px solid #E0D0FF;
+      box-shadow: 0 4px 16px rgba(108,63,197,.10); transition: all .2s;
+      text-decoration: none; color: var(--text); display: block;
+    }
+    .licao-card:hover { border-color: var(--purple); box-shadow: 0 8px 28px rgba(108,63,197,.22); transform: translateY(-2px); }
+    .licao-card .num { font-size: 2rem; margin-bottom: 8px; }
+    .licao-card h3 { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 700; }
+
+    /* LESSON PAGE */
+    main { max-width: 860px; margin: 0 auto; padding: 0 16px 60px; display: none; }
+    .section { margin-top: 32px; }
+    .section.hidden { display: none; }
+    .section-label { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .section-label .icon { width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .section-label h2 { font-family: 'Baloo 2', cursive; font-size: 1.25rem; font-weight: 700; }
+    .section-label p { font-size: .85rem; color: #888; margin-top: 1px; }
+
+    .video-card { background: var(--card); border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 4px 20px rgba(108,63,197,.10); border: 2px solid transparent; transition: box-shadow .2s; }
+    .video-card:hover { box-shadow: 0 8px 32px rgba(108,63,197,.18); }
+    .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; }
+    .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    /* KAHOOT BUTTONS */
+    .kahoot-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 500px) { .kahoot-buttons { grid-template-columns: 1fr; } }
+    .kahoot-btn {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      padding: 22px 20px; border-radius: var(--radius); border: none; cursor: pointer;
+      font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 700;
+      color: #fff; text-decoration: none; transition: all .2s;
+      box-shadow: 0 4px 16px rgba(0,0,0,.15);
+    }
+    .kahoot-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,.22); }
+    .kahoot-btn.k1 { background: linear-gradient(135deg, var(--blue), #2980b9); }
+    .kahoot-btn.k2 { background: linear-gradient(135deg, var(--orange), #e67e22); }
+    .kahoot-btn .btn-icon { font-size: 1.8rem; }
+
+    /* BACK BUTTON */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin: 24px 0 0;
+      color: var(--purple); font-weight: 700; font-size: .95rem; cursor: pointer;
+      background: none; border: none; font-family: 'Nunito', sans-serif;
+    }
+    .back-btn:hover { text-decoration: underline; }
+
+    /* CORES */
+    .s-slide .icon { background: #EDE0FF; } .s-slide .video-card { border-color: #C4A0FF; }
+    .s-grid  .icon { background: #D6F5E3; } .s-grid  .video-card { border-color: #80D4A8; }
+    .s-quiz  .icon { background: #FFF3CD; } .s-quiz  .video-card { border-color: #FFD93D; }
+    .s-kahoots .icon { background: #F0E6FF; }
+
+    .divider { height: 2px; background: linear-gradient(90deg,transparent,#E0D0FF 30%,#E0D0FF 70%,transparent);
+      margin: 40px 0 0; border: none; }
+
+    /* KAHOOT PAGE */
+    #kahoot-page { display: none; max-width: 500px; margin: 0 auto; padding: 0 16px 40px; }
+    #kahoot-page h2 { font-family: 'Baloo 2', cursive; font-size: 1.3rem; color: var(--purple);
+      text-align: center; padding: 24px 0 16px; }
+    .kahoot-full { background: var(--card); border-radius: var(--radius);
+      overflow: hidden; box-shadow: 0 4px 20px rgba(108,63,197,.15); }
+    .kahoot-full iframe { width: 100%; height: 600px; border: none; display: block; }
+
+    footer { text-align: center; padding: 20px; font-size: .8rem; color: #bbb; }
+    footer strong { color: var(--purple); }
+
+    /* PRÁTICA DE PRONÚNCIA */
+    .s-pratica .icon { background: #FFE0EC; }
+    .kahoot-btn.kp { background: linear-gradient(135deg, var(--pink), #d6457e); grid-column: 1 / -1; }
+    #pratica-page { display: none; max-width: 480px; margin: 0 auto; padding: 0 16px 50px; }
+    .pr-bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 4px 10px; }
+    .pr-bar .pr-prog { font-weight: 800; color: var(--purple); }
+    .pr-bar .pr-stars { font-weight: 800; color: #E6A700; }
+    .pr-card { background: var(--card); border-radius: var(--radius); padding: 24px 20px 28px;
+      box-shadow: 0 8px 28px rgba(108,63,197,.15); text-align: center; }
+    .pr-img { width: 100%; max-width: 280px; aspect-ratio: 1/1; object-fit: cover; border-radius: 16px;
+      margin: 0 auto 16px; display: block; background: #F5F0FF; }
+    .pr-frase { font-family: 'Baloo 2', cursive; font-size: 1.7rem; font-weight: 800; color: var(--purple);
+      margin: 4px 6px 18px; line-height: 1.2; }
+    .pr-modelo { background: #EDE0FF; color: var(--purple); border: none; font-weight: 700; font-size: 1rem;
+      padding: 10px 18px; border-radius: 20px; cursor: pointer; margin-bottom: 18px; font-family: 'Nunito', sans-serif; }
+    .pr-mic { width: 86px; height: 86px; border-radius: 50%; border: none; cursor: pointer; font-size: 2.1rem;
+      background: var(--purple); color: #fff; box-shadow: 0 10px 24px rgba(108,63,197,.4); transition: transform .1s; }
+    .pr-mic:active { transform: scale(.93); }
+    .pr-mic.rec { background: #E8455E; animation: pr-pulse 1s infinite; }
+    @keyframes pr-pulse { 0%{box-shadow:0 0 0 0 rgba(232,69,94,.5)} 70%{box-shadow:0 0 0 18px rgba(232,69,94,0)} 100%{box-shadow:0 0 0 0 rgba(232,69,94,0)} }
+    .pr-hint { color: #9385b8; font-size: .9rem; margin-top: 12px; min-height: 20px; }
+    .pr-fb-stars { font-size: 2.8rem; letter-spacing: 6px; margin-top: 6px; }
+    .pr-fb-stars span { display: inline-block; opacity: 0; transform: scale(.3); }
+    .pr-fb-stars span.on { animation: pr-pop .4s forwards; }
+    @keyframes pr-pop { 60%{transform:scale(1.35)} 100%{opacity:1;transform:scale(1)} }
+    .pr-nota { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; margin-top: 4px; }
+    .pr-aluno { font-size: 1.05rem; margin-top: 8px; }
+    .pr-next { margin-top: 16px; background: var(--yellow); color: var(--text); border: none;
+      font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 800; padding: 13px 30px; border-radius: 24px;
+      cursor: pointer; box-shadow: 0 6px 18px rgba(255,217,61,.5); }
+    .pr-next:active { transform: scale(.97); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">GW <span>Inglês</span></div>
+  <div class="subtitle">Sua aula em casa 🏠✨</div>
+</header>
+
+<div id="loading"><div class="spinner"></div>Carregando...</div>
+<div id="error-box">😕 Erro ao carregar.<br/><small id="error-msg"></small></div>
+
+<!-- PÁGINA DA TURMA -->
+<div id="turma-page"></div>
+
+<!-- TÍTULO DA LIÇÃO -->
+<div id="lesson-title">
+  <button class="back-btn" onclick="goBack()">← Voltar</button>
+  <h1 id="title-text"></h1>
+  <div class="badge">GW Inglês</div>
+</div>
+
+<!-- CONTEÚDO DA LIÇÃO -->
+<main id="main-content">
+
+  <section class="section s-slide" id="sec-slides">
+    <div class="section-label">
+      <div class="icon">🎬</div>
+      <div><h2>Vídeo da Aula</h2><p>Assista e repita as palavras!</p></div>
+    </div>
+    <div class="video-card"><div class="video-wrapper">
+      <iframe id="iframe-slides" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+    </div></div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="section s-grid" id="sec-grid">
+    <div class="section-label">
+      <div class="icon">🧩</div>
+      <div><h2>Vídeo Vocabulário</h2><p>Tente lembrar antes de ver!</p></div>
+    </div>
+    <div class="video-card"><div class="video-wrapper">
+      <iframe id="iframe-grid" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+    </div></div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="section s-quiz" id="sec-quiz">
+    <div class="section-label">
+      <div class="icon">🏆</div>
+      <div><h2>Vídeo Quiz</h2><p>Responda com imagens!</p></div>
+    </div>
+    <div class="video-card"><div class="video-wrapper">
+      <iframe id="iframe-quiz" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+    </div></div>
+  </section>
+
+  <hr class="divider" id="div-pratica" />
+
+  <section class="section s-pratica" id="sec-pratica" style="display:none">
+    <div class="section-label">
+      <div class="icon">🎤</div>
+      <div><h2>Praticar Pronúncia</h2><p>Fale a frase e ganhe estrelas!</p></div>
+    </div>
+    <div class="kahoot-buttons">
+      <a id="btn-pratica" class="kahoot-btn kp" href="#">
+        <span class="btn-icon">🎤</span> Começar a praticar
+      </a>
+    </div>
+  </section>
+
+  <hr class="divider" id="div-kahoots" />
+
+  <section class="section s-kahoots" id="sec-kahoots">
+    <div class="section-label">
+      <div class="icon">🎮</div>
+      <div><h2>Jogar Kahoot!</h2><p>Escolha o quiz e divirta-se!</p></div>
+    </div>
+    <div class="kahoot-buttons">
+      <a id="btn-kahoot1" class="kahoot-btn k1" href="#" target="_blank">
+        <span class="btn-icon">🖼️</span> Quiz Imagens
+      </a>
+      <a id="btn-kahoot2" class="kahoot-btn k2" href="#" target="_blank">
+        <span class="btn-icon">🎧</span> Quiz Áudio
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<!-- PÁGINA DO KAHOOT ISOLADO -->
+<div id="kahoot-page">
+  <button class="back-btn" style="margin-left:16px" onclick="goBack()">← Voltar</button>
+  <h2 id="kahoot-title"></h2>
+  <div class="kahoot-full" id="kahoot-container"></div>
+</div>
+
+<!-- PÁGINA DE PRÁTICA DE PRONÚNCIA -->
+<div id="pratica-page"></div>
+
+<footer>Feito com 💜 pela <strong>GW Inglês</strong></footer>
+
+<script>
+  const PROXY_LICAO = 'https://n8n.gwingles.com/webhook/gw-licao';
+  const PROXY_TURMA = 'https://n8n.gwingles.com/webhook/gw-turma';
+  const PORTEIRO    = 'https://ead.traducaodamusica.com.br/wp-json/gw-pratica/v1/upload';
+  const WEBHOOK_PRONUNCIA = 'https://n8n.gwingles.com/webhook/audioquiz';
+
+  const ANO_EMOJIS  = { '1':'🌱','2':'🌟','3':'🚀','4':'🎯','5':'🏆' };
+  const ANO_NOMES   = { '1':'1º Ano','2':'2º Ano','3':'3º Ano','4':'4º Ano','5':'5º Ano' };
+  const LICAO_ICONS = ['📚','🎒','🌍','🎵','💡','🔬','🎨','🏅'];
+
+  function params() { return new URLSearchParams(window.location.search); }
+
+  function ytEmbed(url) {
+    if (!url) return null;
+    const m = url.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/);
+    return m ? `https://www.youtube.com/embed/${m[1]}?rel=0&modestbranding=1` : null;
+  }
+
+  function setVideo(iframeId, sectionId, url) {
+    const src = ytEmbed(url);
+    if (src) document.getElementById(iframeId).src = src;
+    else document.getElementById(sectionId).classList.add('hidden');
+  }
+
+  function hide(id) { document.getElementById(id).style.display = 'none'; }
+  function show(id, d='block') { document.getElementById(id).style.display = d; }
+
+  function goBack() {
+    const p = params();
+    if (p.get('pratica')) {
+      // Prática → Lição
+      window.location.href = `?licao=${p.get('licao')}${p.get('turma') ? '&turma='+p.get('turma') : ''}`;
+    } else if (p.get('kahoot')) {
+      // Kahoot → Lição
+      window.location.href = `?licao=${p.get('licao')}${p.get('turma') ? '&turma='+p.get('turma') : ''}`;
+    } else if (p.get('licao')) {
+      // Lição → Turma (ou home se não tiver turma)
+      const turma = p.get('turma');
+      window.location.href = turma ? `?turma=${turma}` : '?';
+    } else {
+      window.location.href = '?';
+    }
+  }
+
+  function loading(off) {
+    hide('loading');
+  }
+
+  /* ── PÁGINA DA TURMA ── */
+  async function loadTurma(ano) {
+    try {
+      const res  = await fetch(`${PROXY_TURMA}?ano=${ano}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const licoes = data.licoes || [];
+
+      const emoji = ANO_EMOJIS[ano] || '📚';
+      const nome  = ANO_NOMES[ano]  || `${ano}º Ano`;
+
+      let html = `
+        <div style="text-align:center;padding:32px 0 8px">
+          <span style="font-size:3rem">${emoji}</span>
+          <h2 style="font-family:'Baloo 2',cursive;font-size:1.8rem;color:var(--purple);margin-top:8px">${nome}</h2>
+          <p style="color:#888;margin-top:4px">Escolha uma lição para estudar!</p>
+        </div>
+        <div class="licoes-grid">`;
+
+      licoes.forEach((l, i) => {
+        const icon = LICAO_ICONS[i % LICAO_ICONS.length];
+        html += `<a class="licao-card" href="?licao=${l.id}&turma=${ano}">
+          <div class="num">${icon}</div>
+          <h3>${l.title}</h3>
+        </a>`;
+      });
+
+      html += `</div>`;
+      document.getElementById('turma-page').innerHTML = html;
+
+      loading();
+      show('turma-page');
+
+    } catch(err) {
+      loading();
+      show('error-box');
+      document.getElementById('error-msg').textContent = err.message;
+    }
+  }
+
+  /* ── PÁGINA DA LIÇÃO ── */
+  async function loadLicao(licaoId) {
+    try {
+      const res  = await fetch(`${PROXY_LICAO}?licao=${licaoId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      document.getElementById('title-text').textContent = data.title || 'Aula';
+      document.title = `GW Inglês – ${data.title || 'Aula'}`;
+
+      setVideo('iframe-slides', 'sec-slides', data.video_slides);
+      setVideo('iframe-grid',   'sec-grid',   data.video_grid);
+      setVideo('iframe-quiz',   'sec-quiz',   data.video_quiz);
+
+      // Botões Kahoot
+      const turma = params().get('turma') || '';
+      const base  = `?licao=${licaoId}${turma ? '&turma='+turma : ''}`;
+
+      const btn1 = document.getElementById('btn-kahoot1');
+      const btn2 = document.getElementById('btn-kahoot2');
+
+      if (data.kahoot_embed_1) {
+        btn1.href = `${base}&kahoot=1`;
+        btn1.removeAttribute('target'); // abre na mesma aba
+      } else {
+        btn1.style.display = 'none';
+      }
+
+      if (data.kahoot_embed_2) {
+        btn2.href = `${base}&kahoot=2`;
+        btn2.removeAttribute('target');
+      } else {
+        btn2.style.display = 'none';
+      }
+
+      if (!data.kahoot_embed_1 && !data.kahoot_embed_2) {
+        hide('sec-kahoots');
+        hide('div-kahoots');
+      }
+
+      // Botão de prática (só aparece se a lição tiver frases)
+      if (Array.isArray(data.frases) && data.frases.length) {
+        document.getElementById('btn-pratica').href = `${base}&pratica=1`;
+        document.getElementById('sec-pratica').style.display = '';
+      } else {
+        document.getElementById('sec-pratica').style.display = 'none';
+        document.getElementById('div-pratica').style.display = 'none';
+      }
+
+      loading();
+      show('lesson-title');
+      show('main-content');
+
+    } catch(err) {
+      loading();
+      show('error-box');
+      document.getElementById('error-msg').textContent = err.message;
+    }
+  }
+
+  /* ── PÁGINA DO KAHOOT ── */
+  async function loadKahoot(licaoId, kahootNum) {
+    try {
+      const res  = await fetch(`${PROXY_LICAO}?licao=${licaoId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const embedHtml = kahootNum === '1' ? data.kahoot_embed_1 : data.kahoot_embed_2;
+      const label     = kahootNum === '1' ? '🖼️ Quiz com Imagens' : '🎧 Quiz de Áudio';
+
+      if (!embedHtml) throw new Error('Kahoot não configurado.');
+
+      let html = embedHtml
+        .replace(/width="[^"]*"/, 'width="100%"')
+        .replace(/height="[^"]*"/, 'height="600px"');
+
+      document.getElementById('kahoot-title').textContent = `${label} — ${data.title}`;
+      document.getElementById('kahoot-container').innerHTML = html;
+      document.title = `GW Inglês – ${label}`;
+
+      loading();
+      show('kahoot-page');
+
+    } catch(err) {
+      loading();
+      show('error-box');
+      document.getElementById('error-msg').textContent = err.message;
+    }
+  }
+
+  /* ── PÁGINA DE PRÁTICA DE PRONÚNCIA ── */
+  let _prFrases = [], _prIdx = 0, _prStars = 0, _prRec = null, _prChunks = [], _prGravando = false;
+
+  function _prEstrelas(n) { return n >= 90 ? 3 : n >= 75 ? 2 : 1; }
+  function _prCor(n) { return n >= 90 ? '#2E9E5B' : n >= 70 ? '#C98A00' : '#D6457E'; }
+
+  // Acha a nota em vários formatos possíveis do Azure / servidor Modal.
+  function _prNota(d) {
+    const c = [
+      d && d.nota, d && d.score, d && d.pronScore,
+      d && d.PronunciationAssessment && d.PronunciationAssessment.PronScore,
+      d && d.PronunciationAssessment && d.PronunciationAssessment.AccuracyScore,
+      d && d.NBest && d.NBest[0] && d.NBest[0].PronunciationAssessment && d.NBest[0].PronunciationAssessment.PronScore
+    ];
+    const n = c.find(v => typeof v === 'number');
+    return n != null ? Math.round(n) : null;
+  }
+
+  // Som de acerto (Web Audio, sem arquivo)
+  function _prBip(n) {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const ns = n >= 90 ? [523, 659, 784] : n >= 75 ? [523, 659] : [392];
+      ns.forEach((f, i) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.frequency.value = f; o.type = 'triangle'; o.connect(g); g.connect(ac.destination);
+        const t = ac.currentTime + i * 0.12;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        o.start(t); o.stop(t + 0.2);
+      });
+    } catch (e) {}
+  }
+
+  async function loadPratica(licaoId) {
+    try {
+      const res = await fetch(`${PROXY_LICAO}?licao=${licaoId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      document.title = 'GW Inglês – Praticar';
+      _prFrases = (data.frases || []).filter(f => f && f.frase);
+      _prIdx = 0; _prStars = 0;
+      if (!_prFrases.length) {
+        document.getElementById('pratica-page').innerHTML =
+          `<button class="back-btn" onclick="goBack()">← Voltar</button>
+           <div style="text-align:center;padding:40px 10px;color:var(--purple)">Essa lição ainda não tem frases pra praticar.</div>`;
+        loading(); show('pratica-page'); return;
+      }
+      loading(); show('pratica-page'); _prRender();
+    } catch (err) {
+      loading(); show('error-box');
+      document.getElementById('error-msg').textContent = err.message;
+    }
+  }
+
+  function _prRender() {
+    const f = _prFrases[_prIdx];
+    document.getElementById('pratica-page').innerHTML = `
+      <div class="pr-bar">
+        <button class="back-btn" onclick="goBack()">← Voltar</button>
+        <span class="pr-prog">Frase ${_prIdx + 1} de ${_prFrases.length}</span>
+        <span class="pr-stars">⭐ ${_prStars}</span>
+      </div>
+      <div class="pr-card">
+        ${f.image ? `<img class="pr-img" src="${f.image}" alt="">` : ''}
+        <div class="pr-frase">${f.frase}</div>
+        ${f.audio ? `<button class="pr-modelo" id="pr-modelo">🔊 Ouvir o modelo</button><br>` : ''}
+        <button class="pr-mic" id="pr-mic">🎤</button>
+        <div class="pr-hint" id="pr-hint">Toque no microfone e fale a frase</div>
+        <div id="pr-fb"></div>
+      </div>`;
+    if (f.audio) document.getElementById('pr-modelo').onclick = () => { new Audio(f.audio).play().catch(() => {}); };
+    document.getElementById('pr-mic').onclick = _prToggle;
+  }
+
+  function _prFeedback(nota, data) {
+    const fb = document.getElementById('pr-fb');
+    const qtd = _prEstrelas(nota); _prStars += qtd;
+    document.querySelector('.pr-stars').textContent = '⭐ ' + _prStars;
+    let s = ''; for (let i = 0; i < 3; i++) s += `<span>${i < qtd ? '⭐' : '☆'}</span>`;
+    const tr = data && (data.Transcription || data.transcription || data.text);
+    fb.innerHTML = `
+      <div class="pr-fb-stars">${s}</div>
+      <div class="pr-nota" style="color:${_prCor(nota)}">${nota}</div>
+      ${tr ? `<div class="pr-aluno">Você disse: <b>${tr}</b></div>` : ''}
+      <button class="pr-next" id="pr-next">${_prIdx + 1 < _prFrases.length ? 'Próxima →' : '🎉 Recomeçar'}</button>`;
+    fb.querySelectorAll('.pr-fb-stars span').forEach((el, i) => { if (i < qtd) setTimeout(() => el.classList.add('on'), 120 * i); });
+    _prBip(nota);
+    document.getElementById('pr-next').onclick = () => {
+      if (_prIdx + 1 < _prFrases.length) { _prIdx++; _prRender(); }
+      else { _prIdx = 0; _prStars = 0; _prRender(); }
+    };
+    // v2 (feedback rico): com 1 resposta real do /audioquiz dá pra pintar a
+    // frase palavra a palavra e mostrar a "dica de ouro" do fonema mais fraco.
+  }
+
+  async function _prToggle() {
+    if (_prGravando) { _prRec.stop(); return; }
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch (e) { document.getElementById('pr-hint').textContent = 'Não consegui acessar o microfone. Toque de novo e permita o acesso.'; return; }
+    _prChunks = [];
+    const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    _prRec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    _prRec.ondataavailable = e => { if (e.data.size) _prChunks.push(e.data); };
+    _prRec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop()); _prGravando = false;
+      const m = document.getElementById('pr-mic'); if (m) m.classList.remove('rec');
+      await _prAvaliar(new Blob(_prChunks, { type: 'audio/webm' }));
+    };
+    _prRec.start(); _prGravando = true;
+    document.getElementById('pr-mic').classList.add('rec');
+    document.getElementById('pr-hint').textContent = '🔴 Gravando… toque de novo para parar';
+  }
+
+  async function _prAvaliar(blob) {
+    const hint = document.getElementById('pr-hint'); hint.textContent = 'Avaliando…';
+    try {
+      // 1) sobe pro porteiro → vira URL
+      const fd = new FormData(); fd.append('audio', blob, 'rec.webm');
+      const up = await fetch(PORTEIRO, { method: 'POST', body: fd });
+      const uj = await up.json(); const url = uj.url;
+      if (!url) throw new Error('upload sem url');
+      // 2) manda pro n8n (mesmo contrato do player provado)
+      const r = await fetch(WEBHOOK_PRONUNCIA, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 'Audio Url': url, 'frase': _prFrases[_prIdx].frase })
+      });
+      const data = await r.json();
+      const nota = _prNota(data); hint.textContent = '';
+      if (nota == null) { hint.textContent = 'Recebi a resposta mas não achei a nota.'; console.log('audioquiz:', data); return; }
+      _prFeedback(nota, data);
+    } catch (e) { console.error(e); hint.textContent = 'Deu um problema ao avaliar. Tenta de novo.'; }
+  }
+
+  /* ── ROUTER ── */
+  (function() {
+    const p       = params();
+    const turma   = p.get('turma');
+    const licao   = p.get('licao');
+    const kahoot  = p.get('kahoot');
+    const pratica = p.get('pratica');
+
+    if (pratica && licao) {
+      loadPratica(licao);
+    } else if (kahoot && licao) {
+      loadKahoot(licao, kahoot);
+    } else if (licao) {
+      loadLicao(licao);
+    } else if (turma) {
+      loadTurma(turma);
+    } else {
+      // Home — mostra seleção de turmas
+      const html = `
+        <div style="text-align:center;padding:32px 0 16px">
+          <h2 style="font-family:'Baloo 2',cursive;font-size:1.8rem;color:var(--purple)">Qual é a sua turma?</h2>
+          <p style="color:#888;margin-top:4px">Toque no seu ano para começar!</p>
+        </div>
+        <div class="licoes-grid" style="max-width:500px;margin:0 auto">
+          ${['5','4','3','2','1'].map(a => `
+            <a class="licao-card" href="?turma=${a}">
+              <div class="num">${ANO_EMOJIS[a]}</div>
+              <h3>${ANO_NOMES[a]}</h3>
+            </a>`).join('')}
+        </div>`;
+      document.getElementById('turma-page').innerHTML = html;
+      hide('loading');
+      show('turma-page');
+    }
+  })();
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
