@@ -500,10 +500,19 @@
         loading(); show('pratica-page'); return;
       }
       loading(); show('pratica-page'); _prRender();
+      _prPreload();
     } catch (err) {
       loading(); show('error-box');
       document.getElementById('error-msg').textContent = err.message;
     }
+  }
+
+  // Baixa todas as imagens (e áudios) no fundo, pra "Próxima" ser instantânea.
+  function _prPreload() {
+    _prFrases.forEach(f => {
+      if (f.image) { const im = new Image(); im.decoding = 'async'; im.src = f.image; }
+      if (f.audio) { try { const a = new Audio(); a.preload = 'auto'; a.src = f.audio; } catch (e) {} }
+    });
   }
 
   function _prRender() {
@@ -515,7 +524,7 @@
         <span class="pr-stars">⭐ ${_prStars}</span>
       </div>
       <div class="pr-card">
-        ${f.image ? `<img class="pr-img" src="${f.image}" alt="">` : ''}
+        ${f.image ? `<img class="pr-img" src="${f.image}" alt="" decoding="async">` : ''}
         <div class="pr-frase">${f.frase}</div>
         ${f.audio ? `<button class="pr-modelo" id="pr-modelo">🔊 Clique para ouvir a frase</button><br>` : ''}
         <button class="pr-mic" id="pr-mic">🎤</button>
