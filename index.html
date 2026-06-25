@@ -153,6 +153,17 @@
     .pr-cap { font-size: .75rem; color: #9385b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 14px; }
     .pr-dica { background: #FFF7D6; color: #7a5b00; border-radius: 12px; padding: 10px 14px;
       font-size: .95rem; margin-top: 14px; display: inline-block; }
+    .pr-dica-play { background: #fff; border: 1px solid #e4d28a; color: #7a5b00; border-radius: 14px;
+      padding: 3px 12px; font-size: .85rem; cursor: pointer; margin-left: 8px; font-family: 'Nunito', sans-serif; }
+    .pr-syll { color: #9385b8; font-size: .82rem; margin-top: 8px; }
+    .pr-syll b { color: #7a6ca3; }
+    .pr-mic.busy { background: #b9a6e6; cursor: default; }
+    .pr-spin { width: 30px; height: 30px; border-radius: 50%; display: inline-block;
+      border: 3px solid rgba(255,255,255,.45); border-top-color: #fff; animation: pr-rot .8s linear infinite; }
+    @keyframes pr-rot { to { transform: rotate(360deg); } }
+    .pr-analisando { color: var(--purple); font-weight: 700; }
+    .pr-analisando::after { content: '…'; animation: pr-dots 1.2s steps(4,end) infinite; }
+    @keyframes pr-dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
     .pr-next { margin-top: 16px; background: var(--yellow); color: var(--text); border: none;
       font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 800; padding: 13px 30px; border-radius: 24px;
       cursor: pointer; box-shadow: 0 6px 18px rgba(255,217,61,.5); }
@@ -441,6 +452,7 @@
 
   /* ── PÁGINA DE PRÁTICA DE PRONÚNCIA ── */
   let _prFrases = [], _prIdx = 0, _prStars = 0, _prRec = null, _prChunks = [], _prGravando = false;
+  let _prBusy = false, _prAudioCtx = null, _prRAF = null, _prMaxTimer = null;
 
   function _prEstrelas(n) { return n >= 90 ? 3 : n >= 75 ? 2 : 1; }
   function _prCor(n) { return n >= 90 ? '#2E9E5B' : n >= 70 ? '#C98A00' : '#D6457E'; }
@@ -506,7 +518,7 @@
       <div class="pr-card">
         ${f.image ? `<img class="pr-img" src="${f.image}" alt="">` : ''}
         <div class="pr-frase">${f.frase}</div>
-        ${f.audio ? `<button class="pr-modelo" id="pr-modelo">🔊 Ouvir o modelo</button><br>` : ''}
+        ${f.audio ? `<button class="pr-modelo" id="pr-modelo">🔊 Clique para ouvir a frase</button><br>` : ''}
         <button class="pr-mic" id="pr-mic">🎤</button>
         <div class="pr-hint" id="pr-hint">Toque no microfone e fale a frase</div>
         <div id="pr-fb"></div>
@@ -540,19 +552,17 @@
       if (tr) fraseHtml = `<div class="pr-cap">sua fala</div><div class="pr-aluno">${tr}</div>`;
     }
 
-    // Dica de ouro: pior palavra + som mais fraco dela
+    // Dica de ouro: pior palavra + ouvir/repetir + sílaba (ajuda 3º-5º e pais)
     let dicaHtml = '';
     if (Array.isArray(words) && words.length) {
       const pior = words.reduce((a, b) => _prScoreW(b) < _prScoreW(a) ? b : a);
       if (_prScoreW(pior) < 90) {
-        let som = '';
-        const phs = (pior.Phonemes || []).filter(p => p && p.PronunciationAssessment);
-        if (phs.length) {
-          const pp = phs.reduce((a, b) =>
-            b.PronunciationAssessment.AccuracyScore < a.PronunciationAssessment.AccuracyScore ? b : a);
-          if (pp.PronunciationAssessment.AccuracyScore < 80) som = ` — capricha no som “${pp.Phoneme}”`;
-        }
-        dicaHtml = `<div class="pr-dica">💡 Treina de novo a palavra <b>${pior.Word}</b>${som}</div>`;
+        const f = _prFrases[_prIdx];
+        const sil = (pior.Syllables || []).map(s => s.Syllable).filter(Boolean).join('-');
+        dicaHtml = `<div class="pr-dica">
+          💡 Treina de novo: <b>${pior.Word}</b>${f && f.audio ? ` <button class="pr-dica-play" id="pr-dica-play">🔊 ouvir</button>` : ''}
+          ${sil ? `<div class="pr-syll">soa mais ou menos: <b>${sil}</b></div>` : ''}
+        </div>`;
       }
     }
 
@@ -564,6 +574,8 @@
       <button class="pr-next" id="pr-next">${_prIdx + 1 < _prFrases.length ? 'Próxima →' : '🎉 Recomeçar'}</button>`;
     fb.querySelectorAll('.pr-fb-stars span').forEach((el, i) => { if (i < qtd) setTimeout(() => el.classList.add('on'), 120 * i); });
     _prBip(nota);
+    const dp = document.getElementById('pr-dica-play');
+    if (dp) dp.onclick = () => { const f = _prFrases[_prIdx]; if (f && f.audio) new Audio(f.audio).play().catch(() => {}); };
     document.getElementById('pr-next').onclick = () => {
       if (_prIdx + 1 < _prFrases.length) { _prIdx++; _prRender(); }
       else { _prIdx = 0; _prStars = 0; _prRender(); }
@@ -571,7 +583,8 @@
   }
 
   async function _prToggle() {
-    if (_prGravando) { _prRec.stop(); return; }
+    if (_prBusy) return;                       // analisando → ignora toques (ponto 3)
+    if (_prGravando) { _prParar(); return; }   // parada manual continua funcionando (reserva)
     let stream;
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
     catch (e) { document.getElementById('pr-hint').textContent = 'Não consegui acessar o microfone. Toque de novo e permita o acesso.'; return; }
@@ -580,17 +593,68 @@
     _prRec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
     _prRec.ondataavailable = e => { if (e.data.size) _prChunks.push(e.data); };
     _prRec.onstop = async () => {
+      _prLimparMonitor();
       stream.getTracks().forEach(t => t.stop()); _prGravando = false;
       const m = document.getElementById('pr-mic'); if (m) m.classList.remove('rec');
       await _prAvaliar(new Blob(_prChunks, { type: 'audio/webm' }));
     };
     _prRec.start(); _prGravando = true;
     document.getElementById('pr-mic').classList.add('rec');
-    document.getElementById('pr-hint').textContent = '🔴 Gravando… toque de novo para parar';
+    document.getElementById('pr-hint').textContent = '🔴 Pode falar! Vou parar sozinho quando você terminar.';
+    _prMonitorar(stream);  // para sozinho ao detectar silêncio (ponto 2)
+  }
+
+  // Para a gravação ao detectar silêncio (depois que houve fala) ou no tempo máximo.
+  function _prMonitorar(stream) {
+    try {
+      _prAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = _prAudioCtx.createMediaStreamSource(stream);
+      const an = _prAudioCtx.createAnalyser(); an.fftSize = 512;
+      src.connect(an);
+      const buf = new Uint8Array(an.fftSize);
+      const TH = 0.02, SIL = 1300, MAX = 8000;   // limiar de voz, silêncio p/ parar, teto absoluto
+      let falou = false, silDesde = null;
+      const t0 = performance.now();
+      const loop = () => {
+        if (!_prGravando) return;
+        an.getByteTimeDomainData(buf);
+        let sum = 0; for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        const rms = Math.sqrt(sum / buf.length);
+        const now = performance.now();
+        if (rms > TH) { falou = true; silDesde = null; }
+        else if (falou) { if (silDesde == null) silDesde = now; else if (now - silDesde > SIL) { _prParar(); return; } }
+        if (now - t0 > MAX) { _prParar(); return; }
+        _prRAF = requestAnimationFrame(loop);
+      };
+      _prRAF = requestAnimationFrame(loop);
+    } catch (e) {
+      // se o monitor falhar, garante parada por tempo
+      _prMaxTimer = setTimeout(() => { if (_prGravando) _prParar(); }, 7000);
+    }
+  }
+
+  function _prLimparMonitor() {
+    if (_prRAF) { cancelAnimationFrame(_prRAF); _prRAF = null; }
+    if (_prMaxTimer) { clearTimeout(_prMaxTimer); _prMaxTimer = null; }
+    if (_prAudioCtx) { try { _prAudioCtx.close(); } catch (e) {} _prAudioCtx = null; }
+  }
+
+  function _prParar() {
+    try { if (_prRec && _prRec.state !== 'inactive') _prRec.stop(); } catch (e) {}
+  }
+
+  function _prSetBusy(b) {
+    _prBusy = b;
+    const mic = document.getElementById('pr-mic');
+    if (!mic) return;
+    if (b) { mic.classList.add('busy'); mic.innerHTML = '<span class="pr-spin"></span>'; }
+    else { mic.classList.remove('busy'); mic.innerHTML = '🎤'; }
   }
 
   async function _prAvaliar(blob) {
-    const hint = document.getElementById('pr-hint'); hint.textContent = 'Avaliando…';
+    const hint = document.getElementById('pr-hint');
+    _prSetBusy(true);
+    hint.innerHTML = '<span class="pr-analisando">Analisando sua pronúncia</span>';
     try {
       // 1) sobe pro porteiro → vira URL
       const fd = new FormData(); fd.append('audio', blob, 'rec.webm');
@@ -604,10 +668,14 @@
       });
       const data = await r.json();
       const r0 = Array.isArray(data) ? data[0] : data;
-      const nota = _prNota(r0); hint.textContent = '';
+      const nota = _prNota(r0);
+      _prSetBusy(false); hint.textContent = '';
       if (nota == null) { hint.textContent = 'Recebi a resposta mas não achei a nota.'; console.log('audioquiz:', data); return; }
       _prFeedback(nota, r0);
-    } catch (e) { console.error(e); hint.textContent = 'Deu um problema ao avaliar. Tenta de novo.'; }
+    } catch (e) {
+      console.error(e); _prSetBusy(false);
+      hint.textContent = 'Deu um problema ao avaliar. Tenta de novo.';
+    }
   }
 
   /* ── ROUTER ── */
