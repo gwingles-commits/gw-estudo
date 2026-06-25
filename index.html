@@ -157,10 +157,9 @@
       padding: 3px 12px; font-size: .85rem; cursor: pointer; margin-left: 8px; font-family: 'Nunito', sans-serif; }
     .pr-syll { color: #9385b8; font-size: .82rem; margin-top: 8px; }
     .pr-syll b { color: #7a6ca3; }
-    .pr-mic.busy { background: #b9a6e6; cursor: default; }
-    .pr-spin { width: 30px; height: 30px; border-radius: 50%; display: inline-block;
-      border: 3px solid rgba(255,255,255,.45); border-top-color: #fff; animation: pr-rot .8s linear infinite; }
-    @keyframes pr-rot { to { transform: rotate(360deg); } }
+    .pr-mic.busy { background: #EDE0FF; cursor: default; }
+    .pr-think { display: inline-block; font-size: 2.4rem; animation: pr-think 1.1s ease-in-out infinite; }
+    @keyframes pr-think { 0%,100% { transform: scale(1) rotate(-6deg); } 50% { transform: scale(1.18) rotate(6deg); } }
     .pr-analisando { color: var(--purple); font-weight: 700; }
     .pr-analisando::after { content: '…'; animation: pr-dots 1.2s steps(4,end) infinite; }
     @keyframes pr-dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
@@ -647,7 +646,7 @@
     _prBusy = b;
     const mic = document.getElementById('pr-mic');
     if (!mic) return;
-    if (b) { mic.classList.add('busy'); mic.innerHTML = '<span class="pr-spin"></span>'; }
+    if (b) { mic.classList.add('busy'); mic.innerHTML = '<span class="pr-think">🤔</span>'; }
     else { mic.classList.remove('busy'); mic.innerHTML = '🎤'; }
   }
 
