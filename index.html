@@ -792,8 +792,8 @@
       const an = _prAudioCtx.createAnalyser(); an.fftSize = 512;
       src.connect(an);
       const buf = new Uint8Array(an.fftSize);
-      const TH = 0.02, SIL = 1000, MAX = 5000;
-      let silDesde = null;
+      const TH = 0.02, SIL = 1000, MAX = 5000, VOZ_MIN = 80;
+      let silDesde = null, vozDesde = null;
       const t0 = performance.now();
       _prRing(1);
       const loop = () => {
@@ -804,8 +804,14 @@
         const now = performance.now();
         const elapsed = now - t0;
         _prRing(Math.max(0, 1 - elapsed / MAX));
-        if (rms > TH) { falou = true; _prMonFalou = true; silDesde = null; }
-        else if (falou) { if (silDesde == null) silDesde = now; else if (now - silDesde > SIL) { _prParar(); return; } }
+        if (rms > TH) {
+          if (vozDesde == null) vozDesde = now;
+          else if (!falou && now - vozDesde >= VOZ_MIN) { falou = true; _prMonFalou = true; }
+          silDesde = null;
+        } else {
+          vozDesde = null;
+          if (falou) { if (silDesde == null) silDesde = now; else if (now - silDesde > SIL) { _prParar(); return; } }
+        }
         if (elapsed >= MAX) { _prParar(); return; }
         _prRAF = requestAnimationFrame(loop);
       };
