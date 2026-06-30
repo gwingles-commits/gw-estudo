@@ -296,8 +296,8 @@
   const PORTEIRO    = 'https://ead.traducaodamusica.com.br/wp-json/gw-pratica/v1/upload';
   const WEBHOOK_PRONUNCIA = 'https://n8n.gwingles.com/webhook/audioquiz';
 
-  const ANO_EMOJIS  = { '1':'🌱','2':'🌟','3':'🚀','4':'🎯','5':'🏆' };
-  const ANO_NOMES   = { '1':'1º Ano','2':'2º Ano','3':'3º Ano','4':'4º Ano','5':'5º Ano' };
+  const ANO_EMOJIS  = { '1':'🌱','2':'🌟','3':'🚀','4':'🎯','5':'🏆','J1':'🧸','J2':'🎨' };
+  const ANO_NOMES   = { '1':'1º Ano','2':'2º Ano','3':'3º Ano','4':'4º Ano','5':'5º Ano','J1':'Jardim 1','J2':'Jardim 2' };
   const LICAO_ICONS = ['📚','🎒','🌍','🎵','💡','🔬','🎨','🏅'];
 
   function params() { return new URLSearchParams(window.location.search); }
@@ -774,7 +774,7 @@
           <p style="color:#888;margin-top:4px">Toque no seu ano para começar!</p>
         </div>
         <div class="licoes-grid" style="max-width:500px;margin:0 auto">
-          ${['5','4','3','2','1'].map(a => `
+          ${['5','4','3','2','1','J1','J2'].map(a => `
             <a class="licao-card" href="?turma=${a}">
               <div class="num">${ANO_EMOJIS[a]}</div>
               <h3>${ANO_NOMES[a]}</h3>
