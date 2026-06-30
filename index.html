@@ -671,6 +671,9 @@
   /* ── TELA DE RESULTADO (fim da rodada) ── */
   function _prResultado() {
     _prPararAudio();
+    const turma = params().get('turma') || '';
+    const licao = params().get('licao') || '';
+    const msg = encodeURIComponent(`Olá! Fiz ${_prStars}⭐ em ${_prTentativas} tentativas no app GW Inglês! 🎤🏆`);
     document.getElementById('pratica-page').innerHTML = `
       <div class="pr-bar"><button class="back-btn" onclick="goBack()">← Voltar</button></div>
       <div class="pr-card pr-result">
@@ -682,8 +685,12 @@
           <div class="pr-result-box"><div class="pr-result-num">🎤 ${_prTentativas}</div><div class="pr-result-lbl">tentativas</div></div>
           <div class="pr-result-box"><div class="pr-result-num">📚 ${_prFrases.length}</div><div class="pr-result-lbl">frases</div></div>
         </div>
-        <div class="pr-result-print">📸 Tira um print e mostra pra professora!</div>
-        <button class="pr-next" id="pr-redo">🔁 Praticar tudo de novo</button>
+        <div class="pr-result-print">📸 Tira um print da tela e manda pro WhatsApp da GW!</div>
+        <a class="wpp-btn" style="margin:16px auto 4px;justify-content:center" href="https://wa.me/551136282344?text=${msg}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Mandar resultado no WhatsApp!
+        </a>
+        <button class="pr-next" style="margin-top:10px" id="pr-redo">🔁 Praticar tudo de novo</button>
       </div>`;
     document.getElementById('pr-redo').onclick = () => { _prIdx = 0; _prStars = 0; _prTentativas = 0; _prRender(); };
   }
@@ -701,16 +708,46 @@
     arc.setAttribute('stroke', cor);
   }
 
+  // Toca um bip sintético via Web Audio (sem arquivo)
+  function _prBipCd(isGo) {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      if (isGo) {
+        // GO! — dois tons rápidos subindo (alegre)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523, ac.currentTime);       // C5
+        osc.frequency.setValueAtTime(784, ac.currentTime + 0.1); // G5
+        gain.gain.setValueAtTime(0.35, ac.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.35);
+        osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.35);
+      } else {
+        // 3, 2, 1 — bip curto e discreto
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ac.currentTime); // A4
+        gain.gain.setValueAtTime(0.2, ac.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.12);
+        osc.start(ac.currentTime); osc.stop(ac.currentTime + 0.12);
+      }
+      osc.onended = () => ac.close();
+    } catch(e) {}
+  }
+
   // Countdown "3 2 1 GO!" dentro do círculo, depois chama cb()
   function _prCountdown(cb) {
     const cd = document.getElementById('pr-cd'); if (!cd) { cb(); return; }
     const steps = ['3','2','1','GO!'];
     let i = 0;
+    _prBipCd(false);
     cd.textContent = steps[0]; cd.classList.add('show');
     const iv = setInterval(() => {
       i++;
-      if (i < steps.length) { cd.textContent = steps[i]; }
-      else { clearInterval(iv); cd.classList.remove('show'); cb(); }
+      if (i < steps.length) {
+        _prBipCd(i === steps.length - 1); // GO! = true, demais = false
+        cd.textContent = steps[i];
+      } else { clearInterval(iv); cd.classList.remove('show'); cb(); }
     }, 700);
   }
 
@@ -747,6 +784,8 @@
   // Para sozinho ao detectar silêncio (depois que houve fala) ou no tempo máximo.
   // Também atualiza o anel e filtra áudio vazio (nunca falou → não manda pro Azure).
   function _prMonitorar(stream) {
+    let falou = false;
+    _prMonFalou = false; // começa como false explícito
     try {
       _prAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const src = _prAudioCtx.createMediaStreamSource(stream);
@@ -754,9 +793,9 @@
       src.connect(an);
       const buf = new Uint8Array(an.fftSize);
       const TH = 0.02, SIL = 1000, MAX = 5000;
-      let falou = false, silDesde = null;
+      let silDesde = null;
       const t0 = performance.now();
-      _prRing(1); // começa cheio
+      _prRing(1);
       const loop = () => {
         if (!_prGravando) return;
         an.getByteTimeDomainData(buf);
@@ -764,18 +803,15 @@
         const rms = Math.sqrt(sum / buf.length);
         const now = performance.now();
         const elapsed = now - t0;
-        // Anel esvazia do cheio ao vazio durante MAX ms
         _prRing(Math.max(0, 1 - elapsed / MAX));
-        if (rms > TH) { falou = true; silDesde = null; }
+        if (rms > TH) { falou = true; _prMonFalou = true; silDesde = null; }
         else if (falou) { if (silDesde == null) silDesde = now; else if (now - silDesde > SIL) { _prParar(); return; } }
         if (elapsed >= MAX) { _prParar(); return; }
         _prRAF = requestAnimationFrame(loop);
       };
       _prRAF = requestAnimationFrame(loop);
-      // Guarda flag pra filtro de vazio
-      _prMonFalou = () => falou;
     } catch (e) {
-      _prMonFalou = () => true; // se monitor falhar, deixa passar
+      _prMonFalou = true; // monitor falhou → deixa passar (não punir a criança por bug)
       _prMaxTimer = setTimeout(() => { if (_prGravando) _prParar(); }, 5500);
     }
   }
@@ -801,9 +837,10 @@
   async function _prAvaliar(blob) {
     const hint = document.getElementById('pr-hint');
     // Filtro de vazio: se o monitor não detectou fala, não manda pro Azure
-    if (typeof _prMonFalou === 'function' && !_prMonFalou()) {
+    if (_prMonFalou === false) {
       _prSetBusy(false);
       hint.textContent = 'Não ouvi nada 😊 Toque no microfone e fale a frase!';
+      _prMonFalou = null;
       return;
     }
     _prMonFalou = null;
