@@ -148,8 +148,16 @@
     .pr-modelo { background: #EDE0FF; color: var(--purple); border: none; font-weight: 700; font-size: 1rem;
       padding: 10px 18px; border-radius: 20px; cursor: pointer; margin-bottom: 18px; font-family: 'Nunito', sans-serif; }
     .pr-modelo.playing, .pr-dica-play.playing { opacity: .5; cursor: default; }
+    .pr-mic-wrap { position: relative; width: 110px; height: 110px; display: inline-flex; align-items: center; justify-content: center; }
+    .pr-ring-svg { position: absolute; top: 0; left: 0; width: 110px; height: 110px; transform: rotate(-90deg); pointer-events: none; z-index: 2; }
+    .pr-ring-bg  { fill: none; stroke: rgba(108,63,197,.15); stroke-width: 5; }
+    .pr-ring-arc { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; }
+    .pr-cd { position: absolute; inset: 0; border-radius: 50%; z-index: 3; display: flex; align-items: center; justify-content: center;
+      font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; color: #fff;
+      background: rgba(108,63,197,.88); opacity: 0; pointer-events: none; transition: opacity .15s; }
+    .pr-cd.show { opacity: 1; pointer-events: all; }
     .pr-mic { width: 86px; height: 86px; border-radius: 50%; border: none; cursor: pointer; font-size: 2.1rem;
-      background: var(--purple); color: #fff; box-shadow: 0 10px 24px rgba(108,63,197,.4); transition: transform .1s; }
+      background: var(--purple); color: #fff; box-shadow: 0 10px 24px rgba(108,63,197,.4); transition: transform .1s; position: relative; z-index: 1; }
     .pr-mic:active { transform: scale(.93); }
     .pr-mic.rec { background: #E8455E; animation: pr-pulse 1s infinite; }
     @keyframes pr-pulse { 0%{box-shadow:0 0 0 0 rgba(232,69,94,.5)} 70%{box-shadow:0 0 0 18px rgba(232,69,94,0)} 100%{box-shadow:0 0 0 0 rgba(232,69,94,0)} }
@@ -488,7 +496,7 @@
 
   /* ── PÁGINA DE PRÁTICA DE PRONÚNCIA ── */
   let _prFrases = [], _prIdx = 0, _prStars = 0, _prTentativas = 0, _prRec = null, _prChunks = [], _prGravando = false;
-  let _prBusy = false, _prAudioCtx = null, _prRAF = null, _prMaxTimer = null;
+  let _prBusy = false, _prAudioCtx = null, _prRAF = null, _prMaxTimer = null, _prMonFalou = null;
   let _prAudioEl = null, _prTocando = false;   // tocador único (anti-spam do botão de ouvir)
 
   // Para qualquer áudio que esteja tocando e libera a trava.
@@ -585,7 +593,14 @@
         ${f.image ? `<img class="pr-img" src="${f.image}" alt="" decoding="async">` : ''}
         <div class="pr-frase">${f.frase}</div>
         ${f.audio ? `<button class="pr-modelo" id="pr-modelo">🔊 Clique para ouvir a frase</button><br>` : ''}
-        <button class="pr-mic" id="pr-mic">🎤</button>
+        <div class="pr-mic-wrap">
+          <svg class="pr-ring-svg" viewBox="0 0 110 110">
+            <circle class="pr-ring-bg" cx="55" cy="55" r="45"/>
+            <circle class="pr-ring-arc" id="pr-ring-arc" cx="55" cy="55" r="45"/>
+          </svg>
+          <div class="pr-cd" id="pr-cd"></div>
+          <button class="pr-mic" id="pr-mic">🎤</button>
+        </div>
         <div class="pr-hint" id="pr-hint">Toque no microfone e fale a frase</div>
         <div id="pr-fb"></div>
       </div>`;
@@ -672,29 +687,64 @@
     document.getElementById('pr-redo').onclick = () => { _prIdx = 0; _prStars = 0; _prTentativas = 0; _prRender(); };
   }
 
-  async function _prToggle() {
-    if (_prBusy) return;                       // analisando → ignora toques (ponto 3)
-    if (_prGravando) { _prParar(); return; }   // parada manual continua funcionando (reserva)
-    let stream;
-    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-    catch (e) { document.getElementById('pr-hint').textContent = 'Não consegui acessar o microfone. Toque de novo e permita o acesso.'; return; }
-    _prChunks = [];
-    const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
-    _prRec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-    _prRec.ondataavailable = e => { if (e.data.size) _prChunks.push(e.data); };
-    _prRec.onstop = async () => {
-      _prLimparMonitor();
-      stream.getTracks().forEach(t => t.stop()); _prGravando = false;
-      const m = document.getElementById('pr-mic'); if (m) m.classList.remove('rec');
-      await _prAvaliar(new Blob(_prChunks, { type: 'audio/webm' }));
-    };
-    _prRec.start(); _prGravando = true;
-    document.getElementById('pr-mic').classList.add('rec');
-    document.getElementById('pr-hint').textContent = '🔴 Pode falar! Vou parar sozinho quando você terminar.';
-    _prMonitorar(stream);  // para sozinho ao detectar silêncio (ponto 2)
+  // Atualiza o anel SVG: frac 0..1 (1=cheio), cor roxo→amarelo→vermelho
+  function _prRing(frac) {
+    const arc = document.getElementById('pr-ring-arc'); if (!arc) return;
+    const CIRC = 2 * Math.PI * 45;
+    arc.setAttribute('stroke-dasharray', CIRC.toFixed(1));
+    arc.setAttribute('stroke-dashoffset', (CIRC * (1 - frac)).toFixed(2));
+    let cor;
+    if (frac > 0.5)      cor = '#6C3FC5';
+    else if (frac > 0.25) cor = '#E6A700';
+    else                  cor = '#E8455E';
+    arc.setAttribute('stroke', cor);
   }
 
-  // Para a gravação ao detectar silêncio (depois que houve fala) ou no tempo máximo.
+  // Countdown "3 2 1 GO!" dentro do círculo, depois chama cb()
+  function _prCountdown(cb) {
+    const cd = document.getElementById('pr-cd'); if (!cd) { cb(); return; }
+    const steps = ['3','2','1','GO!'];
+    let i = 0;
+    cd.textContent = steps[0]; cd.classList.add('show');
+    const iv = setInterval(() => {
+      i++;
+      if (i < steps.length) { cd.textContent = steps[i]; }
+      else { clearInterval(iv); cd.classList.remove('show'); cb(); }
+    }, 700);
+  }
+
+  async function _prToggle() {
+    if (_prBusy) return;
+    if (_prGravando) { _prParar(); return; }
+    _prCountdown(async () => {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: {
+          noiseSuppression: true, autoGainControl: true, echoCancellation: true
+        }});
+      } catch (e) {
+        document.getElementById('pr-hint').textContent = 'Não consegui acessar o microfone. Toque de novo e permita o acesso.'; return;
+      }
+      _prChunks = [];
+      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      _prRec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      _prRec.ondataavailable = e => { if (e.data.size) _prChunks.push(e.data); };
+      _prRec.onstop = async () => {
+        _prLimparMonitor();
+        stream.getTracks().forEach(t => t.stop()); _prGravando = false;
+        const m = document.getElementById('pr-mic'); if (m) m.classList.remove('rec');
+        _prRing(0);
+        await _prAvaliar(new Blob(_prChunks, { type: 'audio/webm' }));
+      };
+      _prRec.start(); _prGravando = true;
+      const mic = document.getElementById('pr-mic'); if (mic) mic.classList.add('rec');
+      document.getElementById('pr-hint').textContent = '🔴 Pode falar! Vou parar sozinho quando você terminar.';
+      _prMonitorar(stream);
+    });
+  }
+
+  // Para sozinho ao detectar silêncio (depois que houve fala) ou no tempo máximo.
+  // Também atualiza o anel e filtra áudio vazio (nunca falou → não manda pro Azure).
   function _prMonitorar(stream) {
     try {
       _prAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -702,24 +752,29 @@
       const an = _prAudioCtx.createAnalyser(); an.fftSize = 512;
       src.connect(an);
       const buf = new Uint8Array(an.fftSize);
-      const TH = 0.02, SIL = 1300, MAX = 8000;   // limiar de voz, silêncio p/ parar, teto absoluto
+      const TH = 0.02, SIL = 1000, MAX = 5000;
       let falou = false, silDesde = null;
       const t0 = performance.now();
       const loop = () => {
         if (!_prGravando) return;
         an.getByteTimeDomainData(buf);
-        let sum = 0; for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        let sum = 0; for (let i = 0; i < buf.length; i++) { const v = (buf[i]-128)/128; sum += v*v; }
         const rms = Math.sqrt(sum / buf.length);
         const now = performance.now();
+        const elapsed = now - t0;
+        // Anel esvazia do cheio ao vazio durante MAX ms
+        _prRing(Math.max(0, 1 - elapsed / MAX));
         if (rms > TH) { falou = true; silDesde = null; }
         else if (falou) { if (silDesde == null) silDesde = now; else if (now - silDesde > SIL) { _prParar(); return; } }
-        if (now - t0 > MAX) { _prParar(); return; }
+        if (elapsed >= MAX) { _prParar(); return; }
         _prRAF = requestAnimationFrame(loop);
       };
       _prRAF = requestAnimationFrame(loop);
+      // Guarda flag pra filtro de vazio
+      _prMonFalou = () => falou;
     } catch (e) {
-      // se o monitor falhar, garante parada por tempo
-      _prMaxTimer = setTimeout(() => { if (_prGravando) _prParar(); }, 7000);
+      _prMonFalou = () => true; // se monitor falhar, deixa passar
+      _prMaxTimer = setTimeout(() => { if (_prGravando) _prParar(); }, 5500);
     }
   }
 
@@ -743,6 +798,13 @@
 
   async function _prAvaliar(blob) {
     const hint = document.getElementById('pr-hint');
+    // Filtro de vazio: se o monitor não detectou fala, não manda pro Azure
+    if (typeof _prMonFalou === 'function' && !_prMonFalou()) {
+      _prSetBusy(false);
+      hint.textContent = 'Não ouvi nada 😊 Toque no microfone e fale a frase!';
+      return;
+    }
+    _prMonFalou = null;
     _prSetBusy(true);
     hint.innerHTML = '<span class="pr-analisando">Analisando sua pronúncia</span>';
     try {
