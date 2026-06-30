@@ -151,7 +151,7 @@
     .pr-mic-wrap { position: relative; width: 110px; height: 110px; display: inline-flex; align-items: center; justify-content: center; }
     .pr-ring-svg { position: absolute; top: 0; left: 0; width: 110px; height: 110px; transform: rotate(-90deg); pointer-events: none; z-index: 2; }
     .pr-ring-bg  { fill: none; stroke: rgba(108,63,197,.15); stroke-width: 5; }
-    .pr-ring-arc { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; }
+    .pr-ring-arc { fill: none; stroke-width: 5; stroke-linecap: round; }
     .pr-cd { position: absolute; inset: 0; border-radius: 50%; z-index: 3; display: flex; align-items: center; justify-content: center;
       font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; color: #fff;
       background: rgba(108,63,197,.88); opacity: 0; pointer-events: none; transition: opacity .15s; }
@@ -606,6 +606,7 @@
       </div>`;
     if (f.audio) document.getElementById('pr-modelo').onclick = (e) => _prTocar(f.audio, e.currentTarget);
     document.getElementById('pr-mic').onclick = _prToggle;
+    _prRing(0); // anel começa zerado/invisível
   }
 
   function _prScoreW(w) {
@@ -690,11 +691,11 @@
   // Atualiza o anel SVG: frac 0..1 (1=cheio), cor roxo→amarelo→vermelho
   function _prRing(frac) {
     const arc = document.getElementById('pr-ring-arc'); if (!arc) return;
-    const CIRC = 2 * Math.PI * 45;
-    arc.setAttribute('stroke-dasharray', CIRC.toFixed(1));
+    const CIRC = (2 * Math.PI * 45).toFixed(1);
+    arc.setAttribute('stroke-dasharray', CIRC);
     arc.setAttribute('stroke-dashoffset', (CIRC * (1 - frac)).toFixed(2));
     let cor;
-    if (frac > 0.5)      cor = '#6C3FC5';
+    if (frac > 0.5)       cor = '#6C3FC5';
     else if (frac > 0.25) cor = '#E6A700';
     else                  cor = '#E8455E';
     arc.setAttribute('stroke', cor);
@@ -755,6 +756,7 @@
       const TH = 0.02, SIL = 1000, MAX = 5000;
       let falou = false, silDesde = null;
       const t0 = performance.now();
+      _prRing(1); // começa cheio
       const loop = () => {
         if (!_prGravando) return;
         an.getByteTimeDomainData(buf);
