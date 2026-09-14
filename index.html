@@ -249,6 +249,18 @@
       border: 4px solid var(--purple); color: var(--purple); font-size: 2rem; display: flex; align-items: center; justify-content: center;
       cursor: pointer; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
     .home-grupo { font-family: 'Baloo 2', cursive; color: #8a7bb5; font-size: 1rem; text-align: center; margin: 22px 0 8px; }
+
+    /* nivel 2: as licoes da turma, uma por card, com a ficha grande */
+    .lcards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding-top: 8px; }
+    @media (min-width: 560px) { .lcards { grid-template-columns: repeat(3, 1fr); } }
+    .lcard { background: #fff; border-radius: 26px; border: 5px solid #E6DEFF; text-decoration: none; color: var(--text);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 10px;
+      aspect-ratio: 1 / 1; box-shadow: 0 6px 20px rgba(45,27,107,.08); -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+    .lcard:active { transform: scale(.96); }
+    .lcard img { width: 60%; height: 60%; object-fit: contain; }
+    .lcard .semficha { font-size: 3.4rem; }
+    .lcard h3 { font-family: 'Baloo 2', cursive; font-size: 1.25rem; text-align: center; }
+    .lcard small { color: #8a7bb5; font-weight: 800; font-size: .8rem; }
   </style>
 </head>
 <body>
@@ -475,23 +487,26 @@
     const m = String(url || '').match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
     return m ? m[1] : null;
   }
-  async function loadVideos(serie) {
+  const slugDe = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // TRES NIVEIS: turma -> licoes -> a licao (musicas, quiz e, depois, jogos). A crianca
+  // nunca ve mais de um bloco por tela; quem escolhe a licao e o pai ou a professora.
+  async function loadVideos(serie, unidadeSlug) {
     try {
       const res  = await fetch(`${PROXY_VIDEOS}?serie=${encodeURIComponent(serie)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
-      let html = `<div class="kids-top"><a class="kids-back" href="?" aria-label="Voltar">←</a>
-        <span class="emoji">${emoji}</span><h2>${nome}</h2></div>`;
       const licoes = data.licoes || [];
-      if (!licoes.length) {
-        html += `<div class="kids-vazio"><span class="emoji">🎬</span>Os vídeos desta turma estão chegando!</div>`;
-      }
-      licoes.forEach(L => {
+      const L = unidadeSlug ? licoes.find(x => slugDe(x.unidade) === unidadeSlug) : null;
+      let html = '';
+      if (L) {
+        // nivel 3: a licao
         const icone = L.icone ? `<img src="${L.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
+        html += `<div class="kids-top"><a class="kids-back" href="?videos=${serie}" aria-label="Voltar">←</a>
+          <span class="emoji">${emoji}</span><h2>${L.unidade}</h2></div>`;
         html += `<section class="licao-bloco"><div class="licao-cab">${icone}
-          <div><h3>${L.unidade}</h3><small>${(L.palavras || []).slice(0, 6).join(' · ')}</small></div></div><div class="kids-grid">`;
+          <div><h3>${L.unidade}</h3><small>${(L.palavras || []).slice(0, 8).join(' · ')}</small></div></div><div class="kids-grid">`;
         (L.videos || []).forEach(v => {
           const t = TIPO[v.tipo] || TIPO.chant;
           const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
@@ -500,12 +515,27 @@
             <div class="tipo">${t.emoji}</div>${tomada}${img}<div class="rotulo">${t.nome}</div></div>`;
         });
         html += `</div></section>`;
-      });
-      html += `<div class="kids-legenda"><span class="vc-chant">chant</span><span class="vc-musica">música / rap</span><span class="vc-funk">funk</span><span class="vc-quiz">quiz</span></div>`;
-      if (serie === '1') html += `<div style="text-align:center;margin-top:18px"><a class="licao-card" style="display:inline-block;padding:12px 22px" href="?turma=1&frases=1">📚 Lições de frases</a></div>`;
+        html += `<div class="kids-legenda"><span class="vc-chant">chant</span><span class="vc-musica">música / rap</span><span class="vc-funk">funk</span><span class="vc-quiz">quiz</span></div>`;
+      } else {
+        // nivel 2: as licoes da turma
+        html += `<div class="kids-top"><a class="kids-back" href="?" aria-label="Voltar">←</a>
+          <span class="emoji">${emoji}</span><h2>${nome}</h2></div>`;
+        if (!licoes.length) {
+          html += `<div class="kids-vazio"><span class="emoji">🎬</span>Os vídeos desta turma estão chegando!</div>`;
+        }
+        html += `<div class="lcards">`;
+        licoes.forEach(x => {
+          const icone = x.icone ? `<img src="${x.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(x.unidade)}</div>`;
+          const n = (x.videos || []).length;
+          html += `<a class="lcard" href="?videos=${serie}&u=${slugDe(x.unidade)}">${icone}<h3>${x.unidade}</h3><small>${n} vídeo${n === 1 ? '' : 's'}</small></a>`;
+        });
+        html += `</div>`;
+        if (serie === '1') html += `<div style="text-align:center;margin-top:22px"><a class="licao-card" style="display:inline-block;padding:12px 22px" href="?turma=1&frases=1">📚 Lições de frases</a></div>`;
+      }
       document.getElementById('videos-page').innerHTML = html;
       loading();
       show('videos-page');
+      window.scrollTo(0, 0);
     } catch(err) {
       loading();
       show('error-box');
@@ -1015,9 +1045,9 @@
     const videos  = p.get('videos');
 
     if (videos) {
-      loadVideos(videos);
+      loadVideos(videos, p.get('u') || '');
     } else if (turma && PEQUENOS.includes(turma) && turma !== '1' && !p.get('frases')) {
-      loadVideos(turma);
+      loadVideos(turma, '');
     } else if (pratica && licao) {
       loadPratica(licao);
     } else if (kahoot && licao) {
