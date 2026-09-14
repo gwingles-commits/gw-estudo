@@ -203,6 +203,52 @@
     .pr-result-lbl { font-size: .8rem; color: #9385b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
     .pr-result-print { background: #FFF7D6; color: #7a5b00; border-radius: 12px; padding: 10px 14px;
       font-size: .95rem; margin: 22px 0 4px; }
+
+    /* ── PEQUENOS: videos por licao (Maternal, Jardim 1 e 2, 1o ano) ──
+       Regras de desenho (Art. 24 da Constituicao): icone no lugar de palavra, alvo grande,
+       nada que dependa de ler. A cor da BORDA e sempre a mesma para o mesmo tipo de video,
+       para a crianca aprender "roxo e o chant, verde e o quiz" e achar sozinha o que gosta. */
+    #videos-page { display: none; max-width: 900px; margin: 0 auto; padding: 0 12px 80px; }
+    .kids-top { display: flex; align-items: center; gap: 12px; padding: 18px 4px 6px; }
+    .kids-back { width: 64px; height: 64px; border-radius: 50%; background: #fff; border: 4px solid var(--purple);
+      font-size: 2rem; display: flex; align-items: center; justify-content: center; text-decoration: none; color: var(--purple);
+      box-shadow: 0 4px 14px rgba(108,63,197,.18); flex: 0 0 auto; }
+    .kids-top h2 { font-family: 'Baloo 2', cursive; font-size: 1.7rem; color: var(--purple); }
+    .kids-top .emoji { font-size: 2.2rem; }
+    .licao-bloco { margin: 18px 0 8px; background: #fff; border-radius: 26px; padding: 14px 12px 16px;
+      box-shadow: 0 6px 20px rgba(45,27,107,.08); }
+    .licao-cab { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .licao-cab img { width: 84px; height: 84px; object-fit: contain; }
+    .licao-cab .semficha { width: 84px; height: 84px; font-size: 3rem; display: flex; align-items: center; justify-content: center; }
+    .licao-cab h3 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--text); }
+    .licao-cab small { display: block; color: #8a7bb5; font-weight: 700; font-size: .85rem; }
+    .kids-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (min-width: 560px) { .kids-grid { grid-template-columns: repeat(3, 1fr); } }
+    .vcard { position: relative; border: 6px solid var(--vc, var(--purple)); border-radius: 24px; background: #fff;
+      aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s; overflow: hidden; }
+    .vcard:active { transform: scale(.95); }
+    .vcard img { width: 58%; height: 58%; object-fit: contain; }
+    .vcard .semficha { font-size: 3.2rem; }
+    .vcard .tipo { position: absolute; top: 8px; left: 8px; width: 40px; height: 40px; border-radius: 50%;
+      background: var(--vc, var(--purple)); color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; }
+    .vcard .tomada { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; border-radius: 50%; background: #fff;
+      border: 3px solid var(--vc, var(--purple)); color: var(--vc, var(--purple)); font-family: 'Baloo 2', cursive; font-weight: 800;
+      font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+    .vcard .rotulo { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: .95rem; color: var(--vc, var(--purple));
+      text-transform: uppercase; letter-spacing: .02em; padding: 0 6px; text-align: center; }
+    .vc-chant { --vc: #6C3FC5; } .vc-musica { --vc: #FF8C42; } .vc-rap { --vc: #FF8C42; } .vc-funk { --vc: #FF6B9D; } .vc-quiz { --vc: #4CAF77; } .vc-jogo { --vc: #3BADE8; }
+    .kids-legenda { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; padding: 14px 6px 0; color: #8a7bb5; font-size: .85rem; font-weight: 700; }
+    .kids-legenda span::before { content: ''; display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--vc); margin-right: 6px; vertical-align: -2px; }
+    .kids-vazio { text-align: center; padding: 50px 20px; color: #8a7bb5; font-size: 1.1rem; }
+    .kids-vazio .emoji { font-size: 4rem; display: block; margin-bottom: 10px; }
+    /* o player ocupa a tela inteira; a unica coisa alem do video e o botao de voltar */
+    #player { display: none; position: fixed; inset: 0; background: #000; z-index: 999; }
+    #player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    #player .fechar { position: absolute; top: 12px; left: 12px; width: 64px; height: 64px; border-radius: 50%; background: #fff;
+      border: 4px solid var(--purple); color: var(--purple); font-size: 2rem; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    .home-grupo { font-family: 'Baloo 2', cursive; color: #8a7bb5; font-size: 1rem; text-align: center; margin: 22px 0 8px; }
   </style>
 </head>
 <body>
@@ -217,6 +263,10 @@
 
 <!-- PÁGINA DA TURMA -->
 <div id="turma-page"></div>
+
+<!-- PEQUENOS: vídeos por lição -->
+<div id="videos-page"></div>
+<div id="player"><div class="fechar" onclick="closePlayer()" aria-label="Voltar">←</div></div>
 
 <!-- TÍTULO DA LIÇÃO -->
 <div id="lesson-title">
@@ -319,11 +369,17 @@
 <script>
   const PROXY_LICAO = 'https://n8n.gwingles.com/webhook/gw-licao';
   const PROXY_TURMA = 'https://n8n.gwingles.com/webhook/gw-turma';
+  const PROXY_VIDEOS = 'https://n8n.gwingles.com/webhook/gw-videos';
   const PORTEIRO    = 'https://ead.traducaodamusica.com.br/wp-json/gw-pratica/v1/upload';
   const WEBHOOK_PRONUNCIA = 'https://n8n.gwingles.com/webhook/audioquiz';
 
-  const ANO_EMOJIS  = { '1':'🌱','2':'🌟','3':'🚀','4':'🎯','5':'🏆','J1':'🧸','J2':'🎨' };
-  const ANO_NOMES   = { '1':'1º Ano','2':'2º Ano','3':'3º Ano','4':'4º Ano','5':'5º Ano','J1':'Jardim 1','J2':'Jardim 2' };
+  const ANO_EMOJIS  = { '1':'🌱','2':'🌟','3':'🚀','4':'🎯','5':'🏆','J1':'🧸','J2':'🎨','M':'🍼' };
+  const ANO_NOMES   = { '1':'1º Ano','2':'2º Ano','3':'3º Ano','4':'4º Ano','5':'5º Ano','J1':'Jardim 1','J2':'Jardim 2','M':'Maternal' };
+  // Turmas dos pequenos: quem navega e o pai ou a professora; a crianca reconhece o desenho.
+  const PEQUENOS    = ['M','J1','J2','1'];
+  // A cor e SEMPRE a mesma para o mesmo tipo (roxo chant, laranja rap/musica, rosa funk, verde quiz).
+  const TIPO = { chant:{emoji:'🎵',nome:'Chant'}, musica:{emoji:'🎤',nome:'Música'}, rap:{emoji:'🎤',nome:'Rap'}, funk:{emoji:'🪩',nome:'Funk'}, quiz:{emoji:'❓',nome:'Quiz'}, jogo:{emoji:'🎮',nome:'Jogo'} };
+  const UNIDADE_EMOJI = { food:'🍎', fruit:'🍎', vegetables:'🥕', animals:'🐄', farmer:'🐔', farm:'🐔', pets:'🐶', bedroom:'🛏️', quarto:'🛏️', 'my clothes':'👕', clothes:'👕', colors:'🌈', cores:'🌈', family:'👨‍👩‍👧', numbers:'🔢' };
   const LICAO_ICONS = ['📚','🎒','🌍','🎵','💡','🔬','🎨','🏅'];
 
   function params() { return new URLSearchParams(window.location.search); }
@@ -383,6 +439,10 @@
         </div>
         <div class="licoes-grid">`;
 
+      if (PEQUENOS.includes(ano)) {
+        html += `<a class="licao-card" href="?videos=${ano}" style="border-color:var(--purple)">
+          <div class="num">🎬</div><h3>Músicas e vídeos</h3></a>`;
+      }
       licoes.forEach((l, i) => {
         const icon = LICAO_ICONS[i % LICAO_ICONS.length];
         html += `<a class="licao-card" href="?licao=${l.id}&turma=${ano}">
@@ -403,6 +463,76 @@
       document.getElementById('error-msg').textContent = err.message;
     }
   }
+
+
+  /* ── PEQUENOS: VÍDEOS POR LIÇÃO ── */
+  function emojiDaUnidade(nome) {
+    const n = String(nome || '').toLowerCase();
+    for (const k in UNIDADE_EMOJI) if (n.includes(k)) return UNIDADE_EMOJI[k];
+    return '⭐';
+  }
+  function ytId(url) {
+    const m = String(url || '').match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+  async function loadVideos(serie) {
+    try {
+      const res  = await fetch(`${PROXY_VIDEOS}?serie=${encodeURIComponent(serie)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const emoji = ANO_EMOJIS[serie] || '⭐';
+      const nome  = ANO_NOMES[serie] || data.rotulo || serie;
+      let html = `<div class="kids-top"><a class="kids-back" href="?" aria-label="Voltar">←</a>
+        <span class="emoji">${emoji}</span><h2>${nome}</h2></div>`;
+      const licoes = data.licoes || [];
+      if (!licoes.length) {
+        html += `<div class="kids-vazio"><span class="emoji">🎬</span>Os vídeos desta turma estão chegando!</div>`;
+      }
+      licoes.forEach(L => {
+        const icone = L.icone ? `<img src="${L.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
+        html += `<section class="licao-bloco"><div class="licao-cab">${icone}
+          <div><h3>${L.unidade}</h3><small>${(L.palavras || []).slice(0, 6).join(' · ')}</small></div></div><div class="kids-grid">`;
+        (L.videos || []).forEach(v => {
+          const t = TIPO[v.tipo] || TIPO.chant;
+          const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
+          const tomada = v.tomada ? `<div class="tomada">${v.tomada}</div>` : '';
+          html += `<div class="vcard vc-${v.tipo}" onclick="openPlayer('${ytId(v.youtube) || ''}')">
+            <div class="tipo">${t.emoji}</div>${tomada}${img}<div class="rotulo">${t.nome}</div></div>`;
+        });
+        html += `</div></section>`;
+      });
+      html += `<div class="kids-legenda"><span class="vc-chant">chant</span><span class="vc-musica">música / rap</span><span class="vc-funk">funk</span><span class="vc-quiz">quiz</span></div>`;
+      if (serie === '1') html += `<div style="text-align:center;margin-top:18px"><a class="licao-card" style="display:inline-block;padding:12px 22px" href="?turma=1&frases=1">📚 Lições de frases</a></div>`;
+      document.getElementById('videos-page').innerHTML = html;
+      loading();
+      show('videos-page');
+    } catch(err) {
+      loading();
+      show('error-box');
+      document.getElementById('error-msg').textContent = err.message;
+    }
+  }
+  // O PLAYER E UMA TELA SO: o video e o botao de voltar. Sair remove o iframe, senao o audio
+  // continua tocando por baixo da lista.
+  function openPlayer(id) {
+    if (!id) return;
+    const p = document.getElementById('player');
+    const old = p.querySelector('iframe'); if (old) old.remove();
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+    f.allow = 'autoplay; fullscreen; encrypted-media'; f.allowFullscreen = true;
+    p.appendChild(f);
+    p.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    history.pushState({ player: 1 }, '');
+  }
+  function closePlayer() {
+    const p = document.getElementById('player');
+    const f = p.querySelector('iframe'); if (f) f.remove();
+    p.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
@@ -882,8 +1012,13 @@
     const licao   = p.get('licao');
     const kahoot  = p.get('kahoot');
     const pratica = p.get('pratica');
+    const videos  = p.get('videos');
 
-    if (pratica && licao) {
+    if (videos) {
+      loadVideos(videos);
+    } else if (turma && PEQUENOS.includes(turma) && turma !== '1' && !p.get('frases')) {
+      loadVideos(turma);
+    } else if (pratica && licao) {
       loadPratica(licao);
     } else if (kahoot && licao) {
       loadKahoot(licao, kahoot);
@@ -898,9 +1033,18 @@
           <h2 style="font-family:'Baloo 2',cursive;font-size:1.8rem;color:var(--purple)">Qual é a sua turma?</h2>
           <p style="color:#888;margin-top:4px">Toque no seu ano para começar!</p>
         </div>
+        <div class="home-grupo">🎈 Pequenos — músicas, chants e quizzes</div>
         <div class="licoes-grid" style="max-width:500px;margin:0 auto">
-          ${['5','4','3','2','1','J1','J2'].map(a => `
-            <a class="licao-card" href="?turma=${a}">
+          ${PEQUENOS.map(a => `
+            <a class="licao-card" href="?videos=${a}">
+              <div class="num">${ANO_EMOJIS[a]}</div>
+              <h3>${ANO_NOMES[a]}</h3>
+            </a>`).join('')}
+        </div>
+        <div class="home-grupo">📚 Fundamental — lições de frases</div>
+        <div class="licoes-grid" style="max-width:500px;margin:0 auto">
+          ${['1','2','3','4','5'].map(a => `
+            <a class="licao-card" href="?turma=${a}&frases=1">
               <div class="num">${ANO_EMOJIS[a]}</div>
               <h3>${ANO_NOMES[a]}</h3>
             </a>`).join('')}
