@@ -265,6 +265,43 @@
     .lcard .semficha { font-size: 3.4rem; }
     .lcard h3 { font-family: 'Baloo 2', cursive; font-size: 1.25rem; text-align: center; }
     .lcard small { color: #8a7bb5; font-weight: 800; font-size: .8rem; }
+
+    /* ── ATELIÊ: pintar e traçar com o dedo ──
+       O SVG da 883 e traco aberto (nao ha regiao fechada), entao a tinta vai numa camada
+       POR BAIXO do traco: a crianca arrasta o dedo como giz de cera e a linha preta fica
+       sempre visivel por cima. Sem precisao, sem frustracao. [2026-09-15] */
+    .secao-tit { font-family: 'Baloo 2', cursive; font-size: 1.25rem; color: var(--purple); margin: 22px 4px 10px; }
+    .acards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (min-width: 560px) { .acards { grid-template-columns: repeat(4, 1fr); } }
+    .acard { border: 5px solid #E6DEFF; border-radius: 22px; background: #fff; aspect-ratio: 1 / 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+    .acard:active { transform: scale(.95); }
+    .acard img { width: 62%; height: 62%; object-fit: contain; }
+    .acard .rotulo { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: .95rem; color: var(--text); text-transform: uppercase; }
+    .folhas { display: flex; flex-direction: column; gap: 10px; }
+    .folha { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 18px; padding: 12px 14px; text-decoration: none; color: var(--text);
+      border: 3px solid #E6DEFF; }
+    .folha .ic { font-size: 1.8rem; }
+    .folha b { font-family: 'Baloo 2', cursive; font-size: 1.05rem; display: block; }
+    .folha small { color: #8a7bb5; font-weight: 700; }
+    #atelie { display: none; position: fixed; inset: 0; background: #FFFDF7; z-index: 998; flex-direction: column; }
+    #atelie .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+    #atelie .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
+    #atelie .modo { display: flex; gap: 8px; margin-left: auto; }
+    #atelie .modo button { border: 4px solid var(--purple); background: #fff; color: var(--purple); border-radius: 30px; padding: 8px 14px;
+      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; cursor: pointer; }
+    #atelie .modo button.on { background: var(--purple); color: #fff; }
+    #atelie .palco { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 6px; min-height: 0; }
+    #atelie .quadro { position: relative; width: min(94vw, calc(100vh - 220px)); aspect-ratio: 1 / 1; background: #fff; border-radius: 22px;
+      box-shadow: 0 8px 24px rgba(45,27,107,.12); overflow: hidden; touch-action: none; }
+    #atelie canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    #atelie .traco { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    #atelie .gizes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; padding: 10px 8px 16px; }
+    #atelie .giz { width: 46px; height: 46px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 0 0 3px #E6DEFF; cursor: pointer; flex: 0 0 auto; }
+    #atelie .giz.on { box-shadow: 0 0 0 4px var(--purple); transform: scale(1.15); }
+    #atelie .giz.ferr { background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+    #atelie .nome { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-family: 'Baloo 2', cursive; font-size: 1.4rem;
+      color: var(--purple); pointer-events: none; text-transform: uppercase; letter-spacing: .04em; }
   </style>
 </head>
 <body>
@@ -283,6 +320,13 @@
 <!-- PEQUENOS: vídeos por lição -->
 <div id="videos-page"></div>
 <div id="player"><div class="fechar" onclick="closePlayer()" aria-label="Voltar">←</div></div>
+<!-- ATELIÊ: pintar e traçar -->
+<div id="atelie">
+  <div class="topo"><a class="kids-back" href="#" onclick="closeAtelie();return false" aria-label="Voltar">←</a>
+    <div class="modo"><button id="mPintar" onclick="setModo('pintar')">🎨 Pintar</button><button id="mTracar" onclick="setModo('tracar')">✏️ Traçar</button></div></div>
+  <div class="palco"><div class="quadro"><canvas id="tinta"></canvas><img class="traco" id="tracoImg" alt=""><div class="nome" id="atNome"></div></div></div>
+  <div class="gizes" id="gizes"></div>
+</div>
 
 <!-- TÍTULO DA LIÇÃO -->
 <div id="lesson-title">
@@ -523,6 +567,28 @@
             <div class="tipo">${t.emoji}</div>${tomada}${img}<div class="rotulo">${v.titulo || t.nome}</div></div>`;
         });
         html += `</div></section>`;
+        // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
+        const at = L.atelier || [];
+        if (at.length) {
+          ATELIE_ITENS = at;
+          html += `<div class="secao-tit">🎨 Pintar e traçar</div><div class="acards">`;
+          at.forEach((a, i) => {
+            const img = a.ficha ? `<img src="${a.ficha}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
+            html += `<div class="acard" onclick="openAtelie(${i})">${img}<div class="rotulo">${a.palavra}</div></div>`;
+          });
+          html += `</div>`;
+        }
+        // FOLHAS da 889 para imprimir (quem abre é o pai ou a professora)
+        const fo = L.folhas || [];
+        if (fo.length) {
+          html += `<div class="secao-tit">🖨️ Folhas para imprimir</div><div class="folhas">`;
+          fo.forEach(f => {
+            const nomeTipo = t => String(t || '').toLowerCase().replace(/_/g, ' ');
+            html += `<a class="folha" href="${f.link}" target="_blank" rel="noopener"><span class="ic">📄</span><div><b>${(f.palavras || []).join(' + ')}</b><small>${nomeTipo(f.frente)}${f.verso ? ' · verso: ' + nomeTipo(f.verso) : ''}</small></div></a>`;
+            if (f.recorte) html += `<a class="folha" href="${f.recorte}" target="_blank" rel="noopener"><span class="ic">✂️</span><div><b>Recorte — ${(f.palavras || []).join(' + ')}</b><small>peças para recortar</small></div></a>`;
+          });
+          html += `</div>`;
+        }
       } else {
         // nivel 2: as licoes da turma
         html += `<div class="kids-top"><a class="kids-back" href="?" aria-label="Voltar">←</a>
@@ -548,6 +614,68 @@
       document.getElementById('error-msg').textContent = err.message;
     }
   }
+
+  /* ── ATELIÊ ── */
+  let ATELIE_ITENS = [];
+  const GIZES = ['#E53935', '#FB8C00', '#FDD835', '#43A047', '#1E88E5', '#8E24AA', '#8D6E63', '#F48FB1', '#111111'];
+  const AT = { item: null, modo: 'pintar', cor: GIZES[0], borracha: false, ctx: null, desenhando: false, ultimo: null };
+  function openAtelie(i) {
+    AT.item = ATELIE_ITENS[i]; if (!AT.item) return;
+    const el = document.getElementById('atelie');
+    document.getElementById('atNome').textContent = AT.item.palavra || '';
+    const g = document.getElementById('gizes'); g.innerHTML = '';
+    GIZES.forEach(c => { const d = document.createElement('div'); d.className = 'giz' + (c === AT.cor ? ' on' : ''); d.style.background = c;
+      d.onclick = () => { AT.cor = c; AT.borracha = false; [...g.children].forEach(x => x.classList.remove('on')); d.classList.add('on'); }; g.appendChild(d); });
+    const bor = document.createElement('div'); bor.className = 'giz ferr'; bor.textContent = '🧽'; bor.title = 'borracha';
+    bor.onclick = () => { AT.borracha = true; [...g.children].forEach(x => x.classList.remove('on')); bor.classList.add('on'); }; g.appendChild(bor);
+    const novo = document.createElement('div'); novo.className = 'giz ferr'; novo.textContent = '🔄'; novo.title = 'de novo';
+    novo.onclick = () => limparTinta(); g.appendChild(novo);
+    el.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    history.pushState({ atelie: 1 }, '');
+    setModo(AT.item.tracar && !AT.item.colorir ? 'tracar' : 'pintar');
+    requestAnimationFrame(prepararCanvas);
+  }
+  function closeAtelie() {
+    document.getElementById('atelie').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function setModo(m) {
+    if (m === 'tracar' && !AT.item.tracar) m = 'pintar';
+    if (m === 'pintar' && !AT.item.colorir) m = 'tracar';
+    AT.modo = m;
+    document.getElementById('mPintar').classList.toggle('on', m === 'pintar');
+    document.getElementById('mTracar').classList.toggle('on', m === 'tracar');
+    document.getElementById('mTracar').style.display = AT.item.tracar ? '' : 'none';
+    document.getElementById('mPintar').style.display = AT.item.colorir ? '' : 'none';
+    document.getElementById('tracoImg').src = (m === 'tracar') ? AT.item.tracar : AT.item.colorir;
+    limparTinta();
+  }
+  function prepararCanvas() {
+    const c = document.getElementById('tinta');
+    const r = c.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
+    if (c.width !== Math.round(r.width * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
+    AT.ctx = c.getContext('2d'); AT.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    AT.ctx.lineCap = 'round'; AT.ctx.lineJoin = 'round';
+    if (!c._ligado) {
+      c._ligado = true;
+      const pos = e => { const b = c.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+      c.addEventListener('pointerdown', e => { e.preventDefault(); c.setPointerCapture(e.pointerId); AT.desenhando = true; AT.ultimo = pos(e); pincel(AT.ultimo, AT.ultimo); });
+      c.addEventListener('pointermove', e => { if (!AT.desenhando) return; e.preventDefault(); const p = pos(e); pincel(AT.ultimo, p); AT.ultimo = p; });
+      const fim = () => { AT.desenhando = false; AT.ultimo = null; };
+      c.addEventListener('pointerup', fim); c.addEventListener('pointercancel', fim); c.addEventListener('pointerleave', fim);
+      window.addEventListener('resize', () => requestAnimationFrame(prepararCanvas));
+    }
+  }
+  function pincel(a, b) {
+    const ctx = AT.ctx; if (!ctx) return;
+    const w = document.getElementById('tinta').getBoundingClientRect().width;
+    ctx.globalCompositeOperation = AT.borracha ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = AT.cor; ctx.lineWidth = Math.max(10, w * (AT.modo === 'tracar' ? 0.032 : 0.05));
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  function limparTinta() { const c = document.getElementById('tinta'); if (AT.ctx) { AT.ctx.save(); AT.ctx.setTransform(1, 0, 0, 1, 0, 0); AT.ctx.clearRect(0, 0, c.width, c.height); AT.ctx.restore(); } }
+
   // O PLAYER E UMA TELA SO: o video e o botao de voltar. Sair remove o iframe, senao o audio
   // continua tocando por baixo da lista.
   function openPlayer(id) {
@@ -568,7 +696,7 @@
     p.style.display = 'none';
     document.body.style.overflow = '';
   }
-  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); });
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
