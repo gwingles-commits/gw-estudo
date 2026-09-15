@@ -267,7 +267,7 @@
 
 <header>
   <div class="logo-text">GW <span>Inglês</span></div>
-  <div class="subtitle">Sua aula em casa 🏠✨</div>
+  <div class="subtitle">Músicas e chants para cantar junto 🎵✨</div>
 </header>
 
 <div id="loading"><div class="spinner"></div>Carregando...</div>
@@ -530,7 +530,6 @@
           html += `<a class="lcard" href="?videos=${serie}&u=${slugDe(x.unidade)}">${icone}<h3>${x.unidade}</h3><small>${n} vídeo${n === 1 ? '' : 's'}</small></a>`;
         });
         html += `</div>`;
-        if (serie === '1') html += `<div style="text-align:center;margin-top:22px"><a class="licao-card" style="display:inline-block;padding:12px 22px" href="?turma=1&frases=1">📚 Lições de frases</a></div>`;
       }
       document.getElementById('videos-page').innerHTML = html;
       loading();
@@ -1046,8 +1045,12 @@
 
     if (videos) {
       loadVideos(videos, p.get('u') || '');
-    } else if (turma && PEQUENOS.includes(turma) && turma !== '1' && !p.get('frases')) {
+    } else if (turma && PEQUENOS.includes(turma) && !p.get('frases')) {
       loadVideos(turma, '');
+    } else if ((turma || licao) && !p.get('frases')) {
+      // link antigo de licao de frases: o estudar deixou de ser o app de pronuncia em 14/09/2026
+      window.location.replace('?');
+      return;
     } else if (pratica && licao) {
       loadPratica(licao);
     } else if (kahoot && licao) {
@@ -1061,20 +1064,11 @@
       const html = `
         <div style="text-align:center;padding:32px 0 16px">
           <h2 style="font-family:'Baloo 2',cursive;font-size:1.8rem;color:var(--purple)">Qual é a sua turma?</h2>
-          <p style="color:#888;margin-top:4px">Toque no seu ano para começar!</p>
+          <p style="color:#888;margin-top:4px">Músicas, chants e quizzes para cantar junto 🎵</p>
         </div>
-        <div class="home-grupo">🎈 Pequenos — músicas, chants e quizzes</div>
         <div class="licoes-grid" style="max-width:500px;margin:0 auto">
           ${PEQUENOS.map(a => `
             <a class="licao-card" href="?videos=${a}">
-              <div class="num">${ANO_EMOJIS[a]}</div>
-              <h3>${ANO_NOMES[a]}</h3>
-            </a>`).join('')}
-        </div>
-        <div class="home-grupo">📚 Fundamental — lições de frases</div>
-        <div class="licoes-grid" style="max-width:500px;margin:0 auto">
-          ${['1','2','3','4','5'].map(a => `
-            <a class="licao-card" href="?turma=${a}&frases=1">
               <div class="num">${ANO_EMOJIS[a]}</div>
               <h3>${ANO_NOMES[a]}</h3>
             </a>`).join('')}
