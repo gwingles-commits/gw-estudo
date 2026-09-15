@@ -241,7 +241,7 @@
        para a crianca ver que e a mesma musica em duas versoes. O tipo fica no selo redondo. */
     .pc-0 { --vc: #6C3FC5; } .pc-1 { --vc: #FF8C42; } .pc-2 { --vc: #3BADE8; } .pc-3 { --vc: #FF6B9D; }
     .pc-4 { --vc: #4CAF77; } .pc-5 { --vc: #E8B23B; } .pc-6 { --vc: #E0533B; } .pc-7 { --vc: #14B8A6; }
-    .vc-quiz .tipo { background: #4CAF77; } .vc-jogo .tipo { background: #3BADE8; }
+    .vc-quiz .tipo { background: #4CAF77; } .vc-jogo .tipo { background: #3BADE8; } .vc-episodio .tipo, .vc-historia .tipo { background: #2D1B6B; }
     .kids-legenda { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; padding: 14px 6px 0; color: #8a7bb5; font-size: .85rem; font-weight: 700; }
     .kids-legenda span::before { content: ''; display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--vc); margin-right: 6px; vertical-align: -2px; }
     .kids-vazio { text-align: center; padding: 50px 20px; color: #8a7bb5; font-size: 1.1rem; }
@@ -438,7 +438,7 @@
   // Turmas dos pequenos: quem navega e o pai ou a professora; a crianca reconhece o desenho.
   const PEQUENOS    = ['M','J1','J2','1'];
   // A cor e SEMPRE a mesma para o mesmo tipo (roxo chant, laranja rap/musica, rosa funk, verde quiz).
-  const TIPO = { chant:{emoji:'🎵',nome:'Chant'}, musica:{emoji:'🎤',nome:'Música'}, rap:{emoji:'🎤',nome:'Rap'}, funk:{emoji:'🪩',nome:'Funk'}, quiz:{emoji:'❓',nome:'Quiz'}, jogo:{emoji:'🎮',nome:'Jogo'} };
+  const TIPO = { episodio:{emoji:'🎬',nome:'Episódio'}, historia:{emoji:'📖',nome:'História'}, chant:{emoji:'🎵',nome:'Chant'}, musica:{emoji:'🎤',nome:'Música'}, rap:{emoji:'🎤',nome:'Rap'}, funk:{emoji:'🪩',nome:'Funk'}, quiz:{emoji:'❓',nome:'Quiz'}, jogo:{emoji:'🎮',nome:'Jogo'} };
   const UNIDADE_EMOJI = { food:'🍎', fruit:'🍎', vegetables:'🥕', animals:'🐄', farmer:'🐔', farm:'🐔', pets:'🐶', bedroom:'🛏️', quarto:'🛏️', 'my clothes':'👕', clothes:'👕', colors:'🌈', cores:'🌈', family:'👨‍👩‍👧', numbers:'🔢' };
   const LICAO_ICONS = ['📚','🎒','🌍','🎵','💡','🔬','🎨','🏅'];
 
