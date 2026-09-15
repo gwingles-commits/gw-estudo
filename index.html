@@ -237,7 +237,11 @@
       font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
     .vcard .rotulo { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: .95rem; color: var(--vc, var(--purple));
       text-transform: uppercase; letter-spacing: .02em; padding: 0 6px; text-align: center; }
-    .vc-chant { --vc: #6C3FC5; } .vc-musica { --vc: #FF8C42; } .vc-rap { --vc: #FF8C42; } .vc-funk { --vc: #FF6B9D; } .vc-quiz { --vc: #4CAF77; } .vc-jogo { --vc: #3BADE8; }
+    /* cada peca (linha da 885) ganha uma cor da paleta; A e B da mesma peca compartilham a cor,
+       para a crianca ver que e a mesma musica em duas versoes. O tipo fica no selo redondo. */
+    .pc-0 { --vc: #6C3FC5; } .pc-1 { --vc: #FF8C42; } .pc-2 { --vc: #3BADE8; } .pc-3 { --vc: #FF6B9D; }
+    .pc-4 { --vc: #4CAF77; } .pc-5 { --vc: #E8B23B; } .pc-6 { --vc: #E0533B; } .pc-7 { --vc: #14B8A6; }
+    .vc-quiz .tipo { background: #4CAF77; } .vc-jogo .tipo { background: #3BADE8; }
     .kids-legenda { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; padding: 14px 6px 0; color: #8a7bb5; font-size: .85rem; font-weight: 700; }
     .kids-legenda span::before { content: ''; display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--vc); margin-right: 6px; vertical-align: -2px; }
     .kids-vazio { text-align: center; padding: 50px 20px; color: #8a7bb5; font-size: 1.1rem; }
@@ -507,15 +511,18 @@
           <span class="emoji">${emoji}</span><h2>${L.unidade}</h2></div>`;
         html += `<section class="licao-bloco"><div class="licao-cab">${icone}
           <div><h3>${L.unidade}</h3><small>${(L.palavras || []).slice(0, 8).join(' · ')}</small></div></div><div class="kids-grid">`;
+        const pecas = [];
         (L.videos || []).forEach(v => {
           const t = TIPO[v.tipo] || TIPO.chant;
+          const chave = v.tipo === 'quiz' ? 'q' + (v.linha868 || v.linha885) : String(v.linha885);
+          if (pecas.indexOf(chave) < 0) pecas.push(chave);
+          const cor = pecas.indexOf(chave) % 8;
           const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
           const tomada = v.tomada ? `<div class="tomada">${v.tomada}</div>` : '';
-          html += `<div class="vcard vc-${v.tipo}" onclick="openPlayer('${ytId(v.youtube) || ''}')">
-            <div class="tipo">${t.emoji}</div>${tomada}${img}<div class="rotulo">${t.nome}</div></div>`;
+          html += `<div class="vcard vc-${v.tipo} pc-${cor}" onclick="openPlayer('${ytId(v.youtube) || ''}')">
+            <div class="tipo">${t.emoji}</div>${tomada}${img}<div class="rotulo">${v.titulo || t.nome}</div></div>`;
         });
         html += `</div></section>`;
-        html += `<div class="kids-legenda"><span class="vc-chant">chant</span><span class="vc-musica">música / rap</span><span class="vc-funk">funk</span><span class="vc-quiz">quiz</span></div>`;
       } else {
         // nivel 2: as licoes da turma
         html += `<div class="kids-top"><a class="kids-back" href="?" aria-label="Voltar">←</a>
