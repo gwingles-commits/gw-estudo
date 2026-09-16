@@ -311,7 +311,7 @@
     #roleta .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
     #roleta .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
     #roleta .palco { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 6px; }
-    #roleta .roda { position: relative; width: min(92vw, calc(100vh - 230px)); aspect-ratio: 1 / 1; }
+    #roleta .roda { position: relative; width: min(92vw, calc(100vh - 330px)); aspect-ratio: 1 / 1; }
     #roleta canvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 10px 30px rgba(45,27,107,.18); }
     #roleta .ponteiro { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0;
       border-left: 22px solid transparent; border-right: 22px solid transparent; border-top: 44px solid var(--purple); filter: drop-shadow(0 3px 4px rgba(0,0,0,.25)); z-index: 2; }
@@ -469,6 +469,21 @@
     #misterio .fim .big { font-size: 5rem; }
     #misterio .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; }
     #misterio .fim .sub { font-family: 'Baloo 2', cursive; font-size: 1.4rem; color: #9b8fc4; }
+
+    /* ── PLACAR BOYS × GIRLS genérico: o mesmo bloco serve Roleta, Qual é?, Lousa e Misterioso ── [2026-09-16] */
+    .placar-gw { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px; }
+    .placar-gw .time { position: relative; border-radius: 22px; color: #fff; text-align: center; padding: 8px 6px 10px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 16px rgba(45,27,107,.15); transition: transform .12s; }
+    .placar-gw .time:active { transform: scale(.97); }
+    .placar-gw .time.boys { background: #3BADE8; } .placar-gw .time.girls { background: #FF6B9D; }
+    .placar-gw .time .nome { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; letter-spacing: .06em; }
+    .placar-gw .time .pts { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(2.6rem, 9vw, 4rem); line-height: 1; }
+    .placar-gw .time .menos { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+    .placar-gw .time.pulo { animation: pulo .5s ease-out; }
+    #roleta.treme, #quale.treme { animation: treme-tela .5s; }
+    #rolConfete, #qeConfete { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+    #roleta .suspense { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 4; pointer-events: none; }
+    #roleta .suspense span { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(5rem, 22vw, 11rem); color: var(--purple); text-shadow: 0 6px 0 #fff, 0 0 30px rgba(255,255,255,.9); animation: pisca-lenta .6s infinite; }
   </style>
 </head>
 <body>
@@ -522,16 +537,21 @@
 <!-- QUAL É? -->
 <div id="quale">
   <div class="topo"><a class="kids-back" href="#" onclick="closeQuale();return false" aria-label="Voltar">←</a><h2>🔊 Qual é?</h2><div class="estrelas" id="qeEstrelas"></div></div>
+  <div class="placar-gw" id="qePlacar"></div>
   <button class="ouvir" onclick="tocarAlvo()" aria-label="Ouvir">🔊</button>
+  <canvas id="qeConfete"></canvas>
   <div class="opcoes" id="qeOpcoes"></div>
   <div class="fim" id="qeFim"><div class="big">🎉</div><div class="txt" id="qeFimTxt"></div><button class="de-novo" style="border:4px solid var(--purple);background:#fff;color:var(--purple);font-family:'Baloo 2',cursive;font-weight:800;font-size:1.3rem;padding:12px 30px;border-radius:40px;cursor:pointer" onclick="openQuale()">🔊 De novo</button></div>
 </div>
 <!-- ROLETA -->
 <div id="roleta">
   <div class="topo"><a class="kids-back" href="#" onclick="closeRoleta();return false" aria-label="Voltar">←</a><h2>🎡 Roleta</h2></div>
+  <div class="placar-gw" id="rolPlacar"></div>
   <div class="palco"><div class="roda"><div class="ponteiro"></div><canvas id="rodaCv"></canvas></div>
+    <div class="suspense" id="rolSus"><span>?</span></div>
     <div class="resultado" id="rolRes"><img id="rolImg" alt=""><div class="palavra" id="rolPal"></div><button class="de-novo" onclick="fecharResultado()">🎡 De novo</button></div></div>
   <button class="girar" id="rolGirar" onclick="girar()">GIRAR!</button>
+  <canvas id="rolConfete"></canvas>
 </div>
 <!-- ATELIÊ: pintar e traçar -->
 <div id="atelie">
@@ -761,6 +781,7 @@
       SFX.corrida = (data.sfx && data.sfx.corrida) || [];
       SFX.motiva = (data.sfx && data.sfx.motiva) || [];
       SFX.misterio = (data.sfx && data.sfx.misterio) || {};
+      SFX.quizbgm = (data.sfx && data.sfx.quizbgm) || [];
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
@@ -1191,6 +1212,34 @@
     Promise.all(imgs.map(im => (im.complete ? Promise.resolve() : new Promise(r => { im.onload = r; im.onerror = r; })))).then(() => setTimeout(() => window.print(), 200));
   }
 
+
+  /* ── PLACAR BOYS × GIRLS (genérico) ──
+     Um placar por jogo, guardado em PL[chave]. Tocar no time soma o ponto e faz a festa daquele time:
+     torcida (885/29), confete na cor e tela tremendo. O "−" desfaz com boing. [2026-09-16] */
+  const PL = {};
+  function placarMontar(chave, elId, telaId, canvasId) {
+    PL[chave] = { boys: 0, girls: 0, telaId: telaId, canvasId: canvasId, elId: elId };
+    const el = document.getElementById(elId);
+    el.innerHTML = ['boys', 'girls'].map(t => `<div class="time ${t}" id="${elId}_${t}" onclick="placarPonto('${chave}','${t}')">
+      <button class="menos" onclick="event.stopPropagation();placarTirar('${chave}','${t}')" aria-label="Tirar ponto">−</button>
+      <div class="nome">${t.toUpperCase()}</div><div class="pts" id="${elId}_${t}_pts">0</div></div>`).join('');
+  }
+  function placarPonto(chave, t) {
+    const p = PL[chave]; if (!p) return; p[t]++;
+    document.getElementById(p.elId + '_' + t + '_pts').textContent = p[t];
+    const el = document.getElementById(p.elId + '_' + t); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
+    somTime(t); festa(t, p.telaId, p.canvasId);
+  }
+  function placarTirar(chave, t) { const p = PL[chave]; if (!p || p[t] <= 0) return; p[t]--; document.getElementById(p.elId + '_' + t + '_pts').textContent = p[t]; somBoing(); }
+  function placarVencedor(chave) { const p = PL[chave]; if (!p) return ''; return p.boys > p.girls ? 'boys' : (p.girls > p.boys ? 'girls' : ''); }
+  // trilha genérica em loop (uma por vez), para o Qual é? e a Roleta
+  let TRILHA = null;
+  function trilha(lista, volume) {
+    if (TRILHA) { try { TRILHA.pause(); } catch (e) {} TRILHA = null; }
+    if (!lista || !lista.length) return;
+    try { TRILHA = new Audio(lista[Math.floor(Math.random() * lista.length)]); TRILHA.loop = true; TRILHA.volume = volume || 0.3; TRILHA.play().catch(() => {}); } catch (e) { TRILHA = null; }
+  }
+
   /* ── QUAL É? ── */
   let AUDIO_ATUAL = null;
   function tocar(url) { try { if (AUDIO_ATUAL) { AUDIO_ATUAL.pause(); } AUDIO_ATUAL = new Audio(url); AUDIO_ATUAL.play().catch(() => {}); } catch (e) {} }
@@ -1203,11 +1252,17 @@
     QE.fila = QE.fila.slice(0, QE.total);
     window.scrollTo(0, 0); document.getElementById('quale').style.display = 'flex'; document.getElementById('qeFim').style.display = 'none';
     document.body.style.overflow = 'hidden'; history.pushState({ quale: 1 }, '');
+    placarMontar('quale', 'qePlacar', 'quale', 'qeConfete');
+    // a trilha do quiz (885/20) baixinha, clima de competição; para no fim
+    trilha(SFX.quizbgm, 0.22);
     proximaRodada();
   }
-  function closeQuale() { document.getElementById('quale').style.display = 'none'; document.body.style.overflow = ''; if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
+  function closeQuale() { document.getElementById('quale').style.display = 'none'; document.body.style.overflow = ''; trilha(null); if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
   function proximaRodada() {
-    if (QE.rodada >= QE.total) { document.getElementById('qeFimTxt').textContent = QE.acertos + ' de ' + QE.total; document.getElementById('qeFim').style.display = 'flex'; somDing(); setTimeout(somPalmas, 400); return; }
+    if (QE.rodada >= QE.total) {
+      trilha(null); const v = placarVencedor('quale');
+      document.getElementById('qeFimTxt').textContent = v ? (v.toUpperCase() + ' WIN!  ' + PL.quale.boys + ' × ' + PL.quale.girls) : ('EMPATE!  ' + PL.quale.boys + ' × ' + PL.quale.girls);
+      document.getElementById('qeFim').style.display = 'flex'; somDing(); setTimeout(() => { if (v) { somTime(v); festa(v, 'quale', 'qeConfete'); } else somPalmas(); }, 400); return; }
     QE.alvo = QE.fila[QE.rodada]; QE.travado = false;
     const outras = embaralhar(QE.fichas.filter(f => f.id !== QE.alvo.id)).slice(0, 2);
     const opcoes = embaralhar([QE.alvo].concat(outras));
@@ -1244,13 +1299,14 @@
     ROL.itens = ROLETA_FICHAS.slice(); ROL.ang = 0; ROL.girando = false;
     ROL.imgs = ROL.itens.map(f => { const im = new Image(); im.src = f.ficha; im.onload = desenharRoda; return im; });
     window.scrollTo(0, 0); document.getElementById('roleta').style.display = 'flex';
-    document.getElementById('rolRes').style.display = 'none';
+    document.getElementById('rolRes').style.display = 'none'; document.getElementById('rolSus').style.display = 'none';
     document.body.style.overflow = 'hidden';
     history.pushState({ roleta: 1 }, '');
+    placarMontar('roleta', 'rolPlacar', 'roleta', 'rolConfete');
     requestAnimationFrame(desenharRoda);
     window.addEventListener('resize', desenharRoda);
   }
-  function closeRoleta() { document.getElementById('roleta').style.display = 'none'; document.body.style.overflow = ''; window.removeEventListener('resize', desenharRoda); }
+  function closeRoleta() { document.getElementById('roleta').style.display = 'none'; document.body.style.overflow = ''; trilha(null); clearTimeout(ROL.sus); window.removeEventListener('resize', desenharRoda); }
   function desenharRoda() {
     const cv = document.getElementById('rodaCv'); if (!cv || !ROL.itens.length) return;
     const r = cv.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
@@ -1292,12 +1348,19 @@
     };
     requestAnimationFrame(passo);
   }
+  // A roda parou: 2,5 s de suspense (tic-tac com rufo, o mesmo do Misterioso, e um "?" piscando)
+  // antes de revelar -- é nessa janela que a turma grita a palavra. O ponto quem dá é a professora.
   function mostrarResultado(i) {
     const f = ROL.itens[i];
-    document.getElementById('rolImg').src = f.ficha; document.getElementById('rolPal').textContent = f.palavra;
-    document.getElementById('rolRes').style.display = 'flex';
-    somDing(); setTimeout(() => { if (f.audio) tocar(f.audio); }, 350); setTimeout(somPalmas, 1300);
-    ROL.girando = false; document.getElementById('rolGirar').disabled = false;
+    document.getElementById('rolSus').style.display = 'flex'; trilha((SFX.misterio && SFX.misterio.suspense) || [], 0.55);
+    clearTimeout(ROL.sus);
+    ROL.sus = setTimeout(() => {
+      trilha(null); document.getElementById('rolSus').style.display = 'none';
+      document.getElementById('rolImg').src = f.ficha; document.getElementById('rolPal').textContent = f.palavra;
+      document.getElementById('rolRes').style.display = 'flex';
+      somDing(); setTimeout(() => { if (f.audio) tocar(f.audio); }, 350);
+      ROL.girando = false; document.getElementById('rolGirar').disabled = false;
+    }, 2500);
   }
   function fecharResultado() { document.getElementById('rolRes').style.display = 'none'; }
 
