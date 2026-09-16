@@ -324,6 +324,29 @@
     #roleta .resultado .palavra { font-family: 'Baloo 2', cursive; font-size: clamp(2.4rem, 9vw, 5rem); color: var(--purple); text-transform: uppercase; letter-spacing: .04em; }
     #roleta .resultado .de-novo { border: 4px solid var(--purple); background: #fff; color: var(--purple); font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; padding: 12px 30px; border-radius: 40px; cursor: pointer; }
     @keyframes pula { 0% { transform: scale(.3); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+    /* ── QUAL É?: ouve a palavra, toca na ficha certa ──
+       Tres fichas grandes, um botao de ouvir de novo, nenhum texto. Acertou: a ficha cresce
+       e ganha o anel verde; errou: balanca e some. Dez rodadas, estrelas no topo. [2026-09-15] */
+    #quale { display: none; position: fixed; inset: 0; background: #FFFDF7; z-index: 998; flex-direction: column; }
+    #quale .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+    #quale .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
+    #quale .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
+    #quale .estrelas { margin-left: auto; font-size: 1.3rem; letter-spacing: 2px; }
+    #quale .ouvir { width: min(38vw, 150px); height: min(38vw, 150px); border-radius: 50%; border: 0; background: var(--purple); color: #fff; font-size: 4rem;
+      margin: 8px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 22px rgba(108,63,197,.35); cursor: pointer; }
+    #quale .ouvir:active { transform: scale(.95); }
+    #quale .opcoes { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 8px 12px 20px; align-content: center; }
+    @media (max-width: 480px) { #quale .opcoes { grid-template-columns: repeat(2, 1fr); } }
+    #quale .opc { background: #fff; border: 6px solid #E6DEFF; border-radius: 26px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s, border-color .15s; }
+    #quale .opc img { width: 78%; height: 78%; object-fit: contain; }
+    #quale .opc.certa { border-color: #4CAF77; transform: scale(1.08); box-shadow: 0 0 0 8px rgba(76,175,119,.25); }
+    #quale .opc.errada { border-color: #E53935; animation: treme .4s; opacity: .35; }
+    @keyframes treme { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+    #quale .fim { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; background: rgba(255,253,247,.96); z-index: 5; }
+    #quale .fim .big { font-size: 5rem; }
+    #quale .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2rem; color: var(--purple); }
   </style>
 </head>
 <body>
@@ -342,6 +365,13 @@
 <!-- PEQUENOS: vídeos por lição -->
 <div id="videos-page"></div>
 <div id="player"><div class="fechar" onclick="closePlayer()" aria-label="Voltar">←</div></div>
+<!-- QUAL É? -->
+<div id="quale">
+  <div class="topo"><a class="kids-back" href="#" onclick="closeQuale();return false" aria-label="Voltar">←</a><h2>🔊 Qual é?</h2><div class="estrelas" id="qeEstrelas"></div></div>
+  <button class="ouvir" onclick="tocarAlvo()" aria-label="Ouvir">🔊</button>
+  <div class="opcoes" id="qeOpcoes"></div>
+  <div class="fim" id="qeFim"><div class="big">🎉</div><div class="txt" id="qeFimTxt"></div><button class="de-novo" style="border:4px solid var(--purple);background:#fff;color:var(--purple);font-family:'Baloo 2',cursive;font-weight:800;font-size:1.3rem;padding:12px 30px;border-radius:40px;cursor:pointer" onclick="openQuale()">🔊 De novo</button></div>
+</div>
 <!-- ROLETA -->
 <div id="roleta">
   <div class="topo"><a class="kids-back" href="#" onclick="closeRoleta();return false" aria-label="Voltar">←</a><h2>🎡 Roleta</h2></div>
@@ -572,6 +602,7 @@
       const res  = await fetch(`${PROXY_VIDEOS}?serie=${encodeURIComponent(serie)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      SFX.palmas = (data.sfx && data.sfx.palmas) || [];
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
@@ -600,9 +631,13 @@
         const fichas = L.fichas || [];
         if (fichas.length >= 3) {
           ROLETA_FICHAS = fichas;
+          const comAudio = fichas.filter(f => f.audio);
           html += `<div class="secao-tit">🎮 Jogos</div><div class="kids-grid">
             <div class="vcard vc-jogo pc-2" onclick="openRoleta()"><div class="tipo">🎡</div>
-              <div class="semficha">🎡</div><div class="rotulo">Roleta</div></div></div>`;
+              <div class="semficha">🎡</div><div class="rotulo">Roleta</div></div>`;
+          if (comAudio.length >= 3) html += `<div class="vcard vc-jogo pc-4" onclick="openQuale()"><div class="tipo">🔊</div>
+              <div class="semficha">👂</div><div class="rotulo">Qual é?</div></div>`;
+          html += `</div>`;
         }
         // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
         const at = L.atelier || [];
@@ -653,13 +688,83 @@
   }
 
 
+
+
+  /* ── SONS DOS JOGOS ──
+     Tique, ding e boing sao sintetizados no navegador (WebAudio): sem arquivo, sem atraso,
+     e o tique acompanha a velocidade da roda. As palmas sao as de crianca da 885 (as
+     mesmas do quiz), sorteadas para nao virar carimbo. [2026-09-15] */
+  const SFX = { ctx: null, palmas: [] };
+  function ac() { try { if (!SFX.ctx) SFX.ctx = new (window.AudioContext || window.webkitAudioContext)(); if (SFX.ctx.state === 'suspended') SFX.ctx.resume(); return SFX.ctx; } catch (e) { return null; } }
+  function somTick() {
+    const c = ac(); if (!c) return; const t = c.currentTime;
+    const o = c.createOscillator(), g = c.createGain(); o.type = 'square'; o.frequency.setValueAtTime(1400, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.06);
+  }
+  function somDing() {
+    const c = ac(); if (!c) return; const t = c.currentTime;
+    [[784, 0], [1175, 0.09], [1568, 0.18]].forEach(([f, d]) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.35, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.6);
+      o.connect(g).connect(c.destination); o.start(t + d); o.stop(t + d + 0.65); });
+  }
+  function somBoing() {
+    const c = ac(); if (!c) return; const t = c.currentTime;
+    const o = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.35);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + 0.42);
+  }
+  function somPalmas() { if (SFX.palmas.length) { try { const a = new Audio(SFX.palmas[Math.floor(Math.random() * SFX.palmas.length)]); a.volume = 0.7; a.play().catch(() => {}); } catch (e) {} } else somDing(); }
+
+  /* ── QUAL É? ── */
+  let AUDIO_ATUAL = null;
+  function tocar(url) { try { if (AUDIO_ATUAL) { AUDIO_ATUAL.pause(); } AUDIO_ATUAL = new Audio(url); AUDIO_ATUAL.play().catch(() => {}); } catch (e) {} }
+  const QE = { fichas: [], fila: [], alvo: null, rodada: 0, total: 10, acertos: 0, travado: false };
+  function embaralhar(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+  function openQuale() {
+    QE.fichas = ROLETA_FICHAS.filter(f => f.audio); if (QE.fichas.length < 3) return;
+    QE.total = Math.min(10, Math.max(6, QE.fichas.length)); QE.rodada = 0; QE.acertos = 0;
+    QE.fila = []; while (QE.fila.length < QE.total) QE.fila = QE.fila.concat(embaralhar(QE.fichas));
+    QE.fila = QE.fila.slice(0, QE.total);
+    window.scrollTo(0, 0); document.getElementById('quale').style.display = 'flex'; document.getElementById('qeFim').style.display = 'none';
+    document.body.style.overflow = 'hidden'; history.pushState({ quale: 1 }, '');
+    proximaRodada();
+  }
+  function closeQuale() { document.getElementById('quale').style.display = 'none'; document.body.style.overflow = ''; if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
+  function proximaRodada() {
+    if (QE.rodada >= QE.total) { document.getElementById('qeFimTxt').textContent = QE.acertos + ' de ' + QE.total; document.getElementById('qeFim').style.display = 'flex'; somDing(); setTimeout(somPalmas, 400); return; }
+    QE.alvo = QE.fila[QE.rodada]; QE.travado = false;
+    const outras = embaralhar(QE.fichas.filter(f => f.id !== QE.alvo.id)).slice(0, 2);
+    const opcoes = embaralhar([QE.alvo].concat(outras));
+    document.getElementById('qeEstrelas').textContent = '⭐'.repeat(QE.acertos) + '☆'.repeat(Math.max(0, QE.rodada - QE.acertos));
+    const box = document.getElementById('qeOpcoes'); box.innerHTML = '';
+    opcoes.forEach(f => { const d = document.createElement('div'); d.className = 'opc'; d.innerHTML = `<img src="${f.ficha}" alt="">`; d.onclick = () => responder(f, d); box.appendChild(d); });
+    setTimeout(tocarAlvo, 350);
+  }
+  function tocarAlvo() { if (QE.alvo && QE.alvo.audio) tocar(QE.alvo.audio); }
+  function responder(f, el) {
+    if (QE.travado) return;
+    if (f.id === QE.alvo.id) {
+      QE.travado = true; el.classList.add('certa'); QE.acertos++; QE.rodada++;
+      somPalmas(); setTimeout(tocarAlvo, 900);
+      setTimeout(proximaRodada, 1800);
+    } else {
+      el.classList.add('errada'); el.onclick = null; somBoing();
+      // errou: a ficha errada some, a palavra toca de novo e a crianca tenta outra vez
+      setTimeout(tocarAlvo, 500);
+      if (!el.dataset.contou) { el.dataset.contou = '1'; }
+      const restantes = [...document.querySelectorAll('#qeOpcoes .opc:not(.errada)')];
+      if (restantes.length === 1) { QE.travado = true; QE.rodada++; restantes[0].classList.add('certa'); setTimeout(proximaRodada, 1400); }
+    }
+  }
+
   /* ── ROLETA ── */
   let ROLETA_FICHAS = [];
   const ROL = { itens: [], imgs: [], ang: 0, girando: false, cores: ['#FFD93D', '#FF6B9D', '#3BADE8', '#4CAF77', '#FF8C42', '#9B59E8', '#14B8A6', '#E0533B'] };
   function openRoleta() {
     ROL.itens = ROLETA_FICHAS.slice(); ROL.ang = 0; ROL.girando = false;
     ROL.imgs = ROL.itens.map(f => { const im = new Image(); im.src = f.ficha; im.onload = desenharRoda; return im; });
-    document.getElementById('roleta').style.display = 'flex';
+    window.scrollTo(0, 0); document.getElementById('roleta').style.display = 'flex';
     document.getElementById('rolRes').style.display = 'none';
     document.body.style.overflow = 'hidden';
     history.pushState({ roleta: 1 }, '');
@@ -698,9 +803,12 @@
     const voltas = 5 + Math.floor(Math.random() * 3);
     const angFinal = -Math.PI / 2 - centroAlvo + voltas * Math.PI * 2 + (Math.random() - 0.5) * fatia * 0.5;
     const ini = ROL.ang % (Math.PI * 2), delta = angFinal - ini, dur = 4200, t0 = performance.now();
+    ac(); let ultimaFatia = Math.floor(ini / fatia);
     const passo = t => {
       const k = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
       ROL.ang = ini + delta * e; desenharRoda();
+      // um tique por fatia que passa no ponteiro -- e ele mesmo desacelera com a roda
+      const fat = Math.floor(ROL.ang / fatia); if (fat !== ultimaFatia) { ultimaFatia = fat; somTick(); }
       if (k < 1) requestAnimationFrame(passo); else mostrarResultado(alvo);
     };
     requestAnimationFrame(passo);
@@ -709,6 +817,7 @@
     const f = ROL.itens[i];
     document.getElementById('rolImg').src = f.ficha; document.getElementById('rolPal').textContent = f.palavra;
     document.getElementById('rolRes').style.display = 'flex';
+    somDing(); setTimeout(() => { if (f.audio) tocar(f.audio); }, 350); setTimeout(somPalmas, 1300);
     ROL.girando = false; document.getElementById('rolGirar').disabled = false;
   }
   function fecharResultado() { document.getElementById('rolRes').style.display = 'none'; }
@@ -728,7 +837,7 @@
     bor.onclick = () => { AT.borracha = true; [...g.children].forEach(x => x.classList.remove('on')); bor.classList.add('on'); }; g.appendChild(bor);
     const novo = document.createElement('div'); novo.className = 'giz ferr'; novo.textContent = '🔄'; novo.title = 'de novo';
     novo.onclick = () => limparTinta(); g.appendChild(novo);
-    el.style.display = 'flex';
+    window.scrollTo(0, 0); el.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     history.pushState({ atelie: 1 }, '');
     setModo(AT.item.tracar && !AT.item.colorir ? 'tracar' : 'pintar');
@@ -794,7 +903,7 @@
     p.style.display = 'none';
     document.body.style.overflow = '';
   }
-  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); });
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
