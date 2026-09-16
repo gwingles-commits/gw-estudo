@@ -358,8 +358,9 @@
     #bingo { display: none; position: fixed; inset: 0; background: #FFFDF7; z-index: 998; flex-direction: column; }
     #bingo .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
     #bingo .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
-    #bingo .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
-    #bingo .topo .imprimir { margin-left: auto; border: 4px solid var(--purple); background: #fff; color: var(--purple); border-radius: 30px; padding: 8px 14px; font-family: 'Baloo 2', cursive; font-weight: 800; cursor: pointer; }
+    #bingo .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); margin-right: auto; }
+    #bingo .topo .imprimir.on { background: var(--purple); color: #fff; }
+    #bingo .topo .imprimir { margin-left: 8px; border: 4px solid var(--purple); background: #fff; color: var(--purple); border-radius: 30px; padding: 8px 14px; font-family: 'Baloo 2', cursive; font-weight: 800; cursor: pointer; }
     #bingo .palco { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 0; padding: 4px 12px; }
     #bingo .sorteada { width: min(70vw, calc(100vh - 330px)); aspect-ratio: 1 / 1; background: #fff; border-radius: 26px; border: 6px solid var(--purple);
       display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(45,27,107,.12); }
@@ -403,7 +404,7 @@
 <!-- BINGO -->
 <div id="bingo">
   <div class="topo"><a class="kids-back" href="#" onclick="closeBingo();return false" aria-label="Voltar">←</a><h2>🎲 Bingo</h2>
-    <button class="imprimir" onclick="imprimirCartelas()">🖨️ Cartelas</button></div>
+    <button class="imprimir" id="bgTodas" onclick="alternarTodas()">📚 Todas as lições</button><button class="imprimir" onclick="imprimirCartelas()">🖨️ Cartelas</button></div>
   <div class="palco"><div class="sorteada" id="bgSorteada"><div class="vazio">🎲</div></div><button class="sortear" id="bgSortear" onclick="sortearBingo()">SORTEAR!</button></div>
   <div class="ja" id="bgJa"></div>
 </div>
@@ -650,6 +651,8 @@
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
       const L = unidadeSlug ? licoes.find(x => slugDe(x.unidade) === unidadeSlug) : null;
+      // todas as fichas da turma (com audio), para o Bingo juntar licoes e ter cartelas diferentes
+      TODAS_FICHAS = []; licoes.forEach(x => (x.fichas || []).forEach(f => { if (f.audio && !TODAS_FICHAS.some(y => y.id === f.id)) TODAS_FICHAS.push(f); }));
       let html = '';
       if (L) {
         // nivel 3: a licao
@@ -763,9 +766,18 @@
 
 
   /* ── BINGO ── */
-  const BG = { fichas: [], restantes: [], unidade: '' };
+  const BG = { fichas: [], restantes: [], unidade: '', todas: false };
+  function fichasDoBingo() { return (BG.todas && TODAS_FICHAS.length >= 4) ? TODAS_FICHAS : ROLETA_FICHAS.filter(f => f.audio); }
+  function alternarTodas() { BG.todas = !BG.todas; document.getElementById('bgTodas').classList.toggle('on', BG.todas); reiniciarBingo(); }
+  function reiniciarBingo() {
+    BG.fichas = fichasDoBingo(); BG.restantes = embaralhar(BG.fichas);
+    document.getElementById('bgSorteada').innerHTML = '<div class="vazio">🎲</div>'; document.getElementById('bgJa').innerHTML = '';
+    document.getElementById('bgSortear').disabled = false; document.getElementById('bgSortear').textContent = 'SORTEAR!';
+  }
   function openBingo() {
-    BG.fichas = ROLETA_FICHAS.filter(f => f.audio); if (BG.fichas.length < 4) return;
+    BG.todas = false; document.getElementById('bgTodas').classList.remove('on');
+    document.getElementById('bgTodas').style.display = (TODAS_FICHAS.length > ROLETA_FICHAS.filter(f => f.audio).length) ? '' : 'none';
+    BG.fichas = fichasDoBingo(); if (BG.fichas.length < 4) return;
     BG.restantes = embaralhar(BG.fichas);
     document.getElementById('bgSorteada').innerHTML = '<div class="vazio">🎲</div>'; document.getElementById('bgJa').innerHTML = '';
     document.getElementById('bgSortear').disabled = false; document.getElementById('bgSortear').textContent = 'SORTEAR!';
@@ -788,10 +800,13 @@
   // pelo proprio navegador. Quem imprime e o pai ou a professora; a crianca marca com giz.
   function imprimirCartelas() {
     const n = BG.fichas.length >= 8 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 12;
-    let html = '';
+    let html = ''; const vistas = {};
     for (let k = 0; k < quantas; k++) {
       if (k % 4 === 0) html += '<div class="folha-bingo">';
-      const esc = embaralhar(BG.fichas).slice(0, n);
+      // nenhuma cartela igual a outra (mesmo conjunto de fichas), enquanto houver combinacao nova
+      let esc = embaralhar(BG.fichas).slice(0, n), chave = esc.map(f => f.id).sort().join(','), tent = 0;
+      while (vistas[chave] && tent++ < 60) { esc = embaralhar(BG.fichas).slice(0, n); chave = esc.map(f => f.id).sort().join(','); }
+      vistas[chave] = 1;
       html += `<div class="cartela" style="--c:${cols}"><div class="tit">BINGO · ${k + 1}</div>` + esc.map(f => `<div class="cel"><img src="${f.ficha}" alt=""></div>`).join('') + `</div>`;
       if (k % 4 === 3 || k === quantas - 1) html += '</div>';
     }
@@ -846,6 +861,7 @@
 
   /* ── ROLETA ── */
   let ROLETA_FICHAS = [];
+  let TODAS_FICHAS = [];
   const ROL = { itens: [], imgs: [], ang: 0, girando: false, cores: ['#FFD93D', '#FF6B9D', '#3BADE8', '#4CAF77', '#FF8C42', '#9B59E8', '#14B8A6', '#E0533B'] };
   function openRoleta() {
     ROL.itens = ROLETA_FICHAS.slice(); ROL.ang = 0; ROL.girando = false;
