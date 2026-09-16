@@ -310,19 +310,29 @@
     #roleta .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
     #roleta .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
     #roleta .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
-    #roleta .palco { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 6px; }
-    #roleta .roda { position: relative; width: min(92vw, calc(100vh - 330px)); aspect-ratio: 1 / 1; }
+    /* Em pé (celular): placar em cima, roda embaixo. Deitado (TV): BOYS | roda | GIRLS, e a roda pega a altura toda. [2026-09-16] */
+    #roleta .palco { flex: 1; position: relative; display: grid; grid-template-columns: 1fr; grid-template-areas: "placar" "roda"; justify-items: center; align-content: center; gap: 8px; min-height: 0; padding: 6px 12px; }
+    #roleta .palco .placar-gw { grid-area: placar; width: 100%; padding: 0; }
+    #roleta .roda { grid-area: roda; position: relative; width: min(92vw, calc(100vh - 330px)); aspect-ratio: 1 / 1; }
+    @media (min-aspect-ratio: 5/4) {
+      #roleta .palco { grid-template-columns: 1fr auto 1fr; grid-template-areas: "boys roda girls"; align-items: center; gap: 16px; }
+      #roleta .palco .placar-gw { display: contents; }
+      #roleta .palco .time.boys { grid-area: boys; } #roleta .palco .time.girls { grid-area: girls; }
+      #roleta .palco .time { width: 100%; }
+      #roleta .roda { width: min(48vw, calc(100vh - 190px)); }
+      #roleta .girar { margin: 4px auto 12px; padding: 12px 40px; font-size: 1.4rem; }
+    }
     #roleta canvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 10px 30px rgba(45,27,107,.18); }
     #roleta .ponteiro { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0;
       border-left: 22px solid transparent; border-right: 22px solid transparent; border-top: 44px solid var(--purple); filter: drop-shadow(0 3px 4px rgba(0,0,0,.25)); z-index: 2; }
     #roleta .girar { display: block; margin: 8px auto 18px; border: 0; background: var(--purple); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 800;
       font-size: 1.6rem; padding: 16px 44px; border-radius: 40px; box-shadow: 0 6px 18px rgba(108,63,197,.35); cursor: pointer; }
     #roleta .girar:disabled { opacity: .5; }
-    #roleta .resultado { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+    #roleta .resultado { position: absolute; inset: 0; border-radius: 50%; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 6px; z-index: 5;
       background: rgba(255,253,247,.96); z-index: 5; }
-    #roleta .resultado img { width: min(60vw, 46vh); height: min(60vw, 46vh); object-fit: contain; animation: pula .6s ease-out; }
-    #roleta .resultado .palavra { font-family: 'Baloo 2', cursive; font-size: clamp(2.4rem, 9vw, 5rem); color: var(--purple); text-transform: uppercase; letter-spacing: .04em; }
-    #roleta .resultado .de-novo { border: 4px solid var(--purple); background: #fff; color: var(--purple); font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; padding: 12px 30px; border-radius: 40px; cursor: pointer; }
+    #roleta .resultado img { width: 56%; height: 50%; object-fit: contain; animation: pula .6s ease-out; }
+    #roleta .resultado .palavra { font-family: 'Baloo 2', cursive; font-size: clamp(1.8rem, 6vh, 4rem); color: var(--purple); text-transform: uppercase; letter-spacing: .04em; }
+    #roleta .resultado .de-novo { border: 4px solid var(--purple); background: #fff; color: var(--purple); font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.1rem; padding: 8px 22px; border-radius: 40px; cursor: pointer; }
     @keyframes pula { 0% { transform: scale(.3); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
 
     /* ── QUAL É?: ouve a palavra, toca na ficha certa ──
@@ -482,7 +492,7 @@
     .placar-gw .time.pulo { animation: pulo .5s ease-out; }
     #roleta.treme, #quale.treme { animation: treme-tela .5s; }
     #rolConfete, #qeConfete { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
-    #roleta .suspense { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 4; pointer-events: none; }
+    #roleta .suspense { position: absolute; inset: 0; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 4; pointer-events: none; }
     #roleta .suspense span { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(5rem, 22vw, 11rem); color: var(--purple); text-shadow: 0 6px 0 #fff, 0 0 30px rgba(255,255,255,.9); animation: pisca-lenta .6s infinite; }
   </style>
 </head>
@@ -546,10 +556,11 @@
 <!-- ROLETA -->
 <div id="roleta">
   <div class="topo"><a class="kids-back" href="#" onclick="closeRoleta();return false" aria-label="Voltar">←</a><h2>🎡 Roleta</h2></div>
-  <div class="placar-gw" id="rolPlacar"></div>
-  <div class="palco"><div class="roda"><div class="ponteiro"></div><canvas id="rodaCv"></canvas></div>
-    <div class="suspense" id="rolSus"><span>?</span></div>
-    <div class="resultado" id="rolRes"><img id="rolImg" alt=""><div class="palavra" id="rolPal"></div><button class="de-novo" onclick="fecharResultado()">🎡 De novo</button></div></div>
+  <div class="palco"><div class="placar-gw" id="rolPlacar"></div>
+    <div class="roda"><div class="ponteiro"></div><canvas id="rodaCv"></canvas>
+      <div class="suspense" id="rolSus"><span>?</span></div>
+      <div class="resultado" id="rolRes"><img id="rolImg" alt=""><div class="palavra" id="rolPal"></div><button class="de-novo" onclick="fecharResultado()">🎡 De novo</button></div>
+    </div></div>
   <button class="girar" id="rolGirar" onclick="girar()">GIRAR!</button>
   <canvas id="rolConfete"></canvas>
 </div>
