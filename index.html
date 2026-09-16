@@ -826,7 +826,7 @@
 
   /* ── LOUSA MÁGICA ── */
   let LOUSA_ITENS = [];
-  const LS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, ocupado: false, svgs: {}, anim: 0 };
+  const LS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, ocupado: false, svgs: {}, simples: {}, anim: 0 };
   function openLousa() {
     if (LOUSA_ITENS.length < 2) return;
     LS.fila = embaralhar(LOUSA_ITENS); LS.total = LS.fila.length; LS.rodada = 0; LS.boys = 0; LS.girls = 0; LS.atual = null; LS.ocupado = false;
@@ -834,7 +834,7 @@
     // na hora do "Let's draw" o desenho tem que sair na hora
     const faltam = LOUSA_ITENS.filter(x => !LS.svgs[x.id]).map(x => x.id);
     if (faltam.length) fetch('https://n8n.gwingles.com/webhook/gw-tracos?ids=' + faltam.join(',')).then(r => r.json())
-      .then(d => { Object.assign(LS.svgs, (d && d.tracos) || {}); }).catch(() => {});
+      .then(d => { Object.assign(LS.svgs, (d && d.tracos) || {}); Object.assign(LS.simples, (d && d.simples) || {}); }).catch(() => {});
     document.getElementById('lsPtsBoys').textContent = '0'; document.getElementById('lsPtsGirls').textContent = '0';
     document.getElementById('lsQuadro').innerHTML = '<div class="vazio">🖍️</div><div class="lapis" id="lsLapis">✏️</div>';
     document.getElementById('lsPalavra').textContent = ''; document.getElementById('lsPalavra').className = 'palavra';
@@ -871,11 +871,14 @@
     const q = document.getElementById('lsQuadro'); q.className = 'quadro'; q.innerHTML = '<div class="lapis" id="lsLapis">✏️</div>';
     falarPalavraLousa(LS.atual);
     const comeca = () => {
-      const txt = LS.svgs[LS.atual.id];
+      // O DESENHO SIMPLES da 888 (6 a 12 formas, o mesmo dos vídeos de desenhar) vem primeiro: é o que
+      // uma criança copia na lousa em segundos. Sem ele, cai no line art da 883 (detalhado demais,
+      // mas melhor que nada) e, sem SVG nenhum, na ficha parada. [2026-09-16]
+      const simp = LS.simples[LS.atual.id], txt = (simp && simp.svg) || LS.svgs[LS.atual.id];
       if (!txt) { q.innerHTML = `<img src="${LS.atual.ficha}" alt="" style="width:100%;height:100%;object-fit:contain">`; depoisDeDesenhar(); return; }
       const doc = new DOMParser().parseFromString(txt, 'image/svg+xml'); const svg = document.importNode(doc.documentElement, true);
-      svg.removeAttribute('width'); svg.removeAttribute('height'); q.insertBefore(svg, q.firstChild);
-      desenharTraco(svg, 2400, depoisDeDesenhar);
+      svg.removeAttribute('width'); svg.removeAttribute('height'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); q.insertBefore(svg, q.firstChild);
+      desenharTraco(svg, simp ? Math.min(3600, 420 * Math.max(4, (simp.passos || []).length)) : 2400, depoisDeDesenhar);
     };
     const depoisDeDesenhar = () => {
       q.classList.add('pisca'); somDing();
@@ -884,27 +887,34 @@
     };
     setTimeout(comeca, 1200);
   }
-  // O TRAÇO SE DESENHA: cada path do SVG_Colorir ganha stroke-dasharray do próprio comprimento e o
-  // dashoffset vai de "tudo escondido" a zero, um path depois do outro, com o lápis na ponta.
+  // O TRAÇO SE DESENHA: cada forma do SVG (path, ellipse, circle, line…) ganha stroke-dasharray do próprio
+  // comprimento e o dashoffset vai de "tudo escondido" a zero, uma forma depois da outra na ordem do arquivo
+  // (que no desenho simples da 888 é a ordem dos passos), com o lápis na ponta. Forma cheia sem traço
+  // (olho, nariz) aparece de uma vez na vez dela. Serve para o SVG Simples da 888 e para o SVG_Colorir da 883.
   function desenharTraco(svg, dur, fim) {
-    const paths = [...svg.querySelectorAll('path')];
-    const tracos = paths.filter(p => /traco|vazado/.test(p.getAttribute('class') || '') || (!/cheio/.test(p.getAttribute('class') || '') && p.getAttribute('fill') === 'none'));
-    const cheios = paths.filter(p => /cheio/.test(p.getAttribute('class') || ''));
-    if (!tracos.length) { fim(); return; }
-    cheios.forEach(p => { p.style.opacity = 0; });
-    const lens = tracos.map(p => { try { return p.getTotalLength() || 0; } catch (e) { return 0; } });
-    const total = lens.reduce((a, b) => a + b, 0) || 1;
-    tracos.forEach((p, i) => { p.style.strokeDasharray = lens[i] + ' ' + lens[i]; p.style.strokeDashoffset = lens[i]; });
-    const vb = (svg.getAttribute('viewBox') || '0 0 958 958').split(/\s+/).map(Number), vw = vb[2] || 958, vh = vb[3] || 958;
+    const formas = [...svg.querySelectorAll('path, ellipse, circle, line, polyline, polygon, rect')];
+    if (!formas.length) { fim(); return; }
+    const itens = formas.map(el => {
+      const cs = getComputedStyle(el); const temTraco = cs.stroke && cs.stroke !== 'none' && parseFloat(cs.strokeWidth) > 0;
+      let L = 0; if (temTraco) { try { L = el.getTotalLength() || 0; } catch (e) { L = 0; } }
+      return { el: el, traco: temTraco && L > 0, L: L };
+    });
+    const somaTraco = itens.reduce((a, x) => a + (x.traco ? x.L : 0), 0) || 1;
+    // forma cheia "vale" 4% do traço total, só para ter um lugar na fila
+    itens.forEach(x => { if (!x.traco) { x.L = somaTraco * 0.04; x.el.style.opacity = 0; } else { x.el.style.strokeDasharray = x.L + ' ' + x.L; x.el.style.strokeDashoffset = x.L; } });
+    const total = itens.reduce((a, x) => a + x.L, 0) || 1;
+    const vb = (svg.getAttribute('viewBox') || '0 0 958 958').split(/[\s,]+/).map(Number), vw = vb[2] || 958, vh = vb[3] || 958;
     const lapis = document.getElementById('lsLapis'); if (lapis) lapis.style.display = 'block';
     const t0 = performance.now();
     const passo = t => {
       const k = Math.min((t - t0) / dur, 1), alvo = k * total; let acc = 0, ponta = null;
-      tracos.forEach((p, i) => { const L = lens[i]; const feito = Math.max(0, Math.min(L, alvo - acc));
-        p.style.strokeDashoffset = L - feito; if (feito > 0 && feito < L) { try { ponta = p.getPointAtLength(feito); } catch (e) {} } acc += L; });
+      itens.forEach(x => { const feito = Math.max(0, Math.min(x.L, alvo - acc));
+        if (x.traco) { x.el.style.strokeDashoffset = x.L - feito; if (feito > 0 && feito < x.L) { try { ponta = x.el.getPointAtLength(feito); } catch (e) {} } }
+        else if (feito >= x.L * 0.5) x.el.style.opacity = 1;
+        acc += x.L; });
       if (ponta && lapis) { lapis.style.left = (ponta.x / vw * 100) + '%'; lapis.style.top = (ponta.y / vh * 100) + '%'; }
       if (k < 1) LS.anim = requestAnimationFrame(passo);
-      else { cheios.forEach(p => { p.style.transition = 'opacity .3s'; p.style.opacity = 1; }); if (lapis) lapis.style.display = 'none'; fim(); }
+      else { itens.forEach(x => { if (!x.traco) x.el.style.opacity = 1; }); if (lapis) lapis.style.display = 'none'; fim(); }
     };
     LS.anim = requestAnimationFrame(passo);
   }
