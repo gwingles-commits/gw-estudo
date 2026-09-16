@@ -374,10 +374,13 @@
     @media print {
       body > *:not(#cartelas) { display: none !important; }
       #cartelas { display: block !important; }
-      .cartela { display: inline-grid; grid-template-columns: repeat(var(--c, 2), 1fr); gap: 4mm; border: 1.2mm solid #6C3FC5; border-radius: 6mm; padding: 5mm; margin: 4mm; page-break-inside: avoid; vertical-align: top; }
-      .cartela .cel { width: 32mm; height: 32mm; border: .6mm dashed #bbb; border-radius: 3mm; display: flex; align-items: center; justify-content: center; }
-      .cartela .cel img { width: 90%; height: 90%; object-fit: contain; }
-      .cartela .tit { grid-column: 1 / -1; text-align: center; font-family: 'Baloo 2', cursive; font-size: 5mm; color: #6C3FC5; }
+      @page { size: A4; margin: 10mm; }
+      /* 4 cartelas por folha A4 (2 x 2), cada uma com a grade de fichas ocupando o quarto da pagina */
+      .folha-bingo { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6mm; height: 275mm; page-break-after: always; }
+      .cartela { display: grid; grid-template-columns: repeat(var(--c, 2), 1fr); grid-auto-rows: 1fr; gap: 3mm; border: 1.2mm solid #6C3FC5; border-radius: 6mm; padding: 4mm; min-height: 0; }
+      .cartela .cel { border: .6mm dashed #bbb; border-radius: 3mm; display: flex; align-items: center; justify-content: center; min-height: 0; }
+      .cartela .cel img { width: 86%; height: 86%; object-fit: contain; }
+      .cartela .tit { grid-column: 1 / -1; text-align: center; font-family: 'Baloo 2', cursive; font-size: 5mm; color: #6C3FC5; align-self: center; }
     }
   </style>
 </head>
@@ -787,8 +790,10 @@
     const n = BG.fichas.length >= 8 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 12;
     let html = '';
     for (let k = 0; k < quantas; k++) {
+      if (k % 4 === 0) html += '<div class="folha-bingo">';
       const esc = embaralhar(BG.fichas).slice(0, n);
       html += `<div class="cartela" style="--c:${cols}"><div class="tit">BINGO · ${k + 1}</div>` + esc.map(f => `<div class="cel"><img src="${f.ficha}" alt=""></div>`).join('') + `</div>`;
+      if (k % 4 === 3 || k === quantas - 1) html += '</div>';
     }
     document.getElementById('cartelas').innerHTML = html;
     setTimeout(() => window.print(), 300);
