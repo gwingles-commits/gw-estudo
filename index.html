@@ -385,6 +385,46 @@
       .cartela .marca { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 2mm; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 3.2mm; color: #6C3FC5; }
       .cartela .marca img { height: 7mm; width: auto; }
     }
+
+    /* ── LOUSA MÁGICA: boys x girls, a TV desenha a palavra e a turma copia na lousa ──
+       A TV diz "Let's draw a... cow!", o traço aparece sozinho (o SVG_Colorir da 883
+       desenhado com stroke-dashoffset, sem vídeo), pisca, fica, e a palavra aparece
+       embaixo. Quem terminou primeiro ganha o ponto; a professora toca no time e sai a
+       torcida dele. [2026-09-15] */
+    #lousa { display: none; position: fixed; inset: 0; background: #FFFDF7; z-index: 998; flex-direction: column; }
+    #lousa .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+    #lousa .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
+    #lousa .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
+    #lousa .topo .rodada { margin-left: auto; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.2rem; color: #9b8fc4; }
+    #lousa .placar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px; }
+    #lousa .time { position: relative; border-radius: 22px; color: #fff; text-align: center; padding: 8px 6px 10px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 16px rgba(45,27,107,.15); transition: transform .12s; }
+    #lousa .time:active { transform: scale(.97); }
+    #lousa .time.boys { background: #3BADE8; } #lousa .time.girls { background: #FF6B9D; }
+    #lousa .time .nome { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; letter-spacing: .06em; }
+    #lousa .time .pts { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(2.6rem, 9vw, 4rem); line-height: 1; }
+    #lousa .time .menos { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+    #lousa .time.pulo { animation: pulo .5s ease-out; }
+    @keyframes pulo { 0% { transform: scale(1); } 40% { transform: scale(1.12) rotate(-2deg); } 100% { transform: scale(1); } }
+    #lousa .palco { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 0; padding: 8px 12px; }
+    #lousa .quadro { position: relative; width: min(78vw, calc(100vh - 360px)); aspect-ratio: 1 / 1; background: #fff; border-radius: 26px; border: 6px solid var(--purple);
+      box-shadow: 0 8px 24px rgba(45,27,107,.12); overflow: hidden; }
+    #lousa .quadro svg { width: 100%; height: 100%; display: block; }
+    #lousa .quadro .vazio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+    #lousa .quadro .lapis { position: absolute; font-size: 2.2rem; transform: translate(-15%, -85%); pointer-events: none; display: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+    #lousa .quadro.pisca svg { animation: pisca .4s 3; }
+    @keyframes pisca { 0%,100% { opacity: 1; } 50% { opacity: .08; } }
+    #lousa .palavra { font-family: 'Baloo 2', cursive; font-size: clamp(2rem, 8vw, 4.2rem); color: var(--purple); text-transform: uppercase; letter-spacing: .06em; min-height: 1.2em; line-height: 1.2; opacity: 0; transition: opacity .3s; }
+    #lousa .palavra.mostra { opacity: 1; animation: pula .5s ease-out; }
+    #lousa .acoes { display: flex; gap: 10px; justify-content: center; padding: 4px 12px 16px; }
+    #lousa .acoes button { border: 0; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; padding: 12px 26px; border-radius: 40px; cursor: pointer; }
+    #lousa .acoes .ir { background: var(--purple); color: #fff; box-shadow: 0 6px 18px rgba(108,63,197,.35); }
+    #lousa .acoes .ir:disabled { opacity: .4; }
+    #lousa .acoes .ouvir { background: #fff; color: var(--purple); border: 4px solid var(--purple); }
+    #lousa .fim { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: rgba(255,253,247,.96); z-index: 5; }
+    #lousa .fim .big { font-size: 5rem; }
+    #lousa .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; }
+    #lousa .fim .sub { font-family: 'Baloo 2', cursive; font-size: 1.4rem; color: #9b8fc4; }
   </style>
 </head>
 <body>
@@ -403,6 +443,17 @@
 <!-- PEQUENOS: vídeos por lição -->
 <div id="videos-page"></div>
 <div id="player"><div class="fechar" onclick="closePlayer()" aria-label="Voltar">←</div></div>
+<!-- LOUSA MÁGICA -->
+<div id="lousa">
+  <div class="topo"><a class="kids-back" href="#" onclick="closeLousa();return false" aria-label="Voltar">←</a><h2>🖍️ Lousa Mágica</h2><div class="rodada" id="lsRodada"></div></div>
+  <div class="placar">
+    <div class="time boys" id="lsBoys" onclick="pontoLousa('boys')"><button class="menos" onclick="event.stopPropagation();tirarPontoLousa('boys')" aria-label="Tirar ponto">−</button><div class="nome">BOYS</div><div class="pts" id="lsPtsBoys">0</div></div>
+    <div class="time girls" id="lsGirls" onclick="pontoLousa('girls')"><button class="menos" onclick="event.stopPropagation();tirarPontoLousa('girls')" aria-label="Tirar ponto">−</button><div class="nome">GIRLS</div><div class="pts" id="lsPtsGirls">0</div></div>
+  </div>
+  <div class="palco"><div class="quadro" id="lsQuadro"><div class="vazio">🖍️</div><div class="lapis" id="lsLapis">✏️</div></div><div class="palavra" id="lsPalavra"></div></div>
+  <div class="acoes"><button class="ouvir" onclick="ouvirLousa()" aria-label="Ouvir">🔊</button><button class="ir" id="lsIr" onclick="rodadaLousa()">LET'S DRAW!</button></div>
+  <div class="fim" id="lsFim"><div class="big">🏆</div><div class="txt" id="lsFimTxt"></div><div class="sub" id="lsFimSub"></div><button class="de-novo" style="border:4px solid var(--purple);background:#fff;color:var(--purple);font-family:'Baloo 2',cursive;font-weight:800;font-size:1.3rem;padding:12px 30px;border-radius:40px;cursor:pointer" onclick="openLousa()">🖍️ De novo</button></div>
+</div>
 <!-- BINGO -->
 <div id="bingo">
   <div class="topo"><a class="kids-back" href="#" onclick="closeBingo();return false" aria-label="Voltar">←</a><h2>🎲 Bingo</h2>
@@ -649,6 +700,7 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       SFX.palmas = (data.sfx && data.sfx.palmas) || [];
+      SFX.lousa = (data.sfx && data.sfx.lousa) || {};
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
@@ -687,6 +739,10 @@
               <div class="semficha">👂</div><div class="rotulo">Qual é?</div></div>`;
           if (comAudio.length >= 4) html += `<div class="vcard vc-jogo pc-5" onclick="openBingo()"><div class="tipo">🎲</div>
               <div class="semficha">🎲</div><div class="rotulo">Bingo</div></div>`;
+          // LOUSA MÁGICA: precisa do traço (SVG_Colorir) para a TV desenhar
+          LOUSA_ITENS = (L.atelier || []).filter(x => x.colorir);
+          if (LOUSA_ITENS.length >= 2) html += `<div class="vcard vc-jogo pc-6" onclick="openLousa()"><div class="tipo">🖍️</div>
+              <div class="semficha">🖍️</div><div class="rotulo">Lousa Mágica</div></div>`;
           html += `</div>`;
         }
         // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
@@ -766,6 +822,101 @@
   }
   function somPalmas() { if (SFX.palmas.length) { try { const a = new Audio(SFX.palmas[Math.floor(Math.random() * SFX.palmas.length)]); a.volume = 0.7; a.play().catch(() => {}); } catch (e) {} } else somDing(); }
 
+
+
+  /* ── LOUSA MÁGICA ── */
+  let LOUSA_ITENS = [];
+  const LS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, ocupado: false, svgs: {}, anim: 0 };
+  function openLousa() {
+    if (LOUSA_ITENS.length < 2) return;
+    LS.fila = embaralhar(LOUSA_ITENS); LS.total = LS.fila.length; LS.rodada = 0; LS.boys = 0; LS.girls = 0; LS.atual = null; LS.ocupado = false;
+    // baixa os traços antes, pelo /gw-tracos (o media do Baserow não abre CORS para o estudar):
+    // na hora do "Let's draw" o desenho tem que sair na hora
+    const faltam = LOUSA_ITENS.filter(x => !LS.svgs[x.id]).map(x => x.id);
+    if (faltam.length) fetch('https://n8n.gwingles.com/webhook/gw-tracos?ids=' + faltam.join(',')).then(r => r.json())
+      .then(d => { Object.assign(LS.svgs, (d && d.tracos) || {}); }).catch(() => {});
+    document.getElementById('lsPtsBoys').textContent = '0'; document.getElementById('lsPtsGirls').textContent = '0';
+    document.getElementById('lsQuadro').innerHTML = '<div class="vazio">🖍️</div><div class="lapis" id="lsLapis">✏️</div>';
+    document.getElementById('lsPalavra').textContent = ''; document.getElementById('lsPalavra').className = 'palavra';
+    document.getElementById('lsRodada').textContent = '0 / ' + LS.total;
+    document.getElementById('lsIr').disabled = false; document.getElementById('lsIr').textContent = "LET'S DRAW!";
+    document.getElementById('lsFim').style.display = 'none';
+    window.scrollTo(0, 0); document.getElementById('lousa').style.display = 'flex';
+    document.body.style.overflow = 'hidden'; history.pushState({ lousa: 1 }, '');
+  }
+  function closeLousa() { document.getElementById('lousa').style.display = 'none'; document.body.style.overflow = ''; cancelAnimationFrame(LS.anim); if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
+  function somTime(t) { const u = SFX.lousa && SFX.lousa[t]; if (u) { try { const a = new Audio(u); a.volume = 0.85; a.play().catch(() => {}); } catch (e) {} } else somPalmas(); }
+  function pontoLousa(t) {
+    LS[t]++; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t];
+    const el = document.getElementById(t === 'boys' ? 'lsBoys' : 'lsGirls'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
+    somTime(t);
+  }
+  function tirarPontoLousa(t) { if (LS[t] > 0) { LS[t]--; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t]; somBoing(); } }
+  function ouvirLousa() { if (!LS.atual) return; falarPalavraLousa(LS.atual); }
+  // "Let's draw a..." e depois a palavra; sem o clipe da voz, vai só a palavra
+  function falarPalavraLousa(f) {
+    const d = SFX.lousa && SFX.lousa.draw;
+    if (!d) { if (f.audio) tocar(f.audio); return; }
+    try { if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); AUDIO_ATUAL = new Audio(d); let foi = false;
+      const dep = () => { if (foi) return; foi = true; if (f.audio) tocar(f.audio); };
+      AUDIO_ATUAL.onended = dep; setTimeout(dep, 2600); AUDIO_ATUAL.play().catch(dep); } catch (e) { if (f.audio) tocar(f.audio); }
+  }
+  function rodadaLousa() {
+    if (LS.ocupado) return;
+    if (!LS.fila.length) { fimLousa(); return; }
+    LS.ocupado = true; LS.atual = LS.fila.shift(); LS.rodada++;
+    document.getElementById('lsRodada').textContent = LS.rodada + ' / ' + LS.total;
+    const ir = document.getElementById('lsIr'); ir.disabled = true;
+    const pal = document.getElementById('lsPalavra'); pal.textContent = LS.atual.palavra; pal.className = 'palavra';
+    const q = document.getElementById('lsQuadro'); q.className = 'quadro'; q.innerHTML = '<div class="lapis" id="lsLapis">✏️</div>';
+    falarPalavraLousa(LS.atual);
+    const comeca = () => {
+      const txt = LS.svgs[LS.atual.id];
+      if (!txt) { q.innerHTML = `<img src="${LS.atual.ficha}" alt="" style="width:100%;height:100%;object-fit:contain">`; depoisDeDesenhar(); return; }
+      const doc = new DOMParser().parseFromString(txt, 'image/svg+xml'); const svg = document.importNode(doc.documentElement, true);
+      svg.removeAttribute('width'); svg.removeAttribute('height'); q.insertBefore(svg, q.firstChild);
+      desenharTraco(svg, 2400, depoisDeDesenhar);
+    };
+    const depoisDeDesenhar = () => {
+      q.classList.add('pisca'); somDing();
+      setTimeout(() => { q.classList.remove('pisca'); pal.classList.add('mostra');
+        ir.textContent = LS.fila.length ? 'NEXT ➡️' : 'ACABOU 🏁'; ir.disabled = false; LS.ocupado = false; }, 1300);
+    };
+    setTimeout(comeca, 1200);
+  }
+  // O TRAÇO SE DESENHA: cada path do SVG_Colorir ganha stroke-dasharray do próprio comprimento e o
+  // dashoffset vai de "tudo escondido" a zero, um path depois do outro, com o lápis na ponta.
+  function desenharTraco(svg, dur, fim) {
+    const paths = [...svg.querySelectorAll('path')];
+    const tracos = paths.filter(p => /traco|vazado/.test(p.getAttribute('class') || '') || (!/cheio/.test(p.getAttribute('class') || '') && p.getAttribute('fill') === 'none'));
+    const cheios = paths.filter(p => /cheio/.test(p.getAttribute('class') || ''));
+    if (!tracos.length) { fim(); return; }
+    cheios.forEach(p => { p.style.opacity = 0; });
+    const lens = tracos.map(p => { try { return p.getTotalLength() || 0; } catch (e) { return 0; } });
+    const total = lens.reduce((a, b) => a + b, 0) || 1;
+    tracos.forEach((p, i) => { p.style.strokeDasharray = lens[i] + ' ' + lens[i]; p.style.strokeDashoffset = lens[i]; });
+    const vb = (svg.getAttribute('viewBox') || '0 0 958 958').split(/\s+/).map(Number), vw = vb[2] || 958, vh = vb[3] || 958;
+    const lapis = document.getElementById('lsLapis'); if (lapis) lapis.style.display = 'block';
+    const t0 = performance.now();
+    const passo = t => {
+      const k = Math.min((t - t0) / dur, 1), alvo = k * total; let acc = 0, ponta = null;
+      tracos.forEach((p, i) => { const L = lens[i]; const feito = Math.max(0, Math.min(L, alvo - acc));
+        p.style.strokeDashoffset = L - feito; if (feito > 0 && feito < L) { try { ponta = p.getPointAtLength(feito); } catch (e) {} } acc += L; });
+      if (ponta && lapis) { lapis.style.left = (ponta.x / vw * 100) + '%'; lapis.style.top = (ponta.y / vh * 100) + '%'; }
+      if (k < 1) LS.anim = requestAnimationFrame(passo);
+      else { cheios.forEach(p => { p.style.transition = 'opacity .3s'; p.style.opacity = 1; }); if (lapis) lapis.style.display = 'none'; fim(); }
+    };
+    LS.anim = requestAnimationFrame(passo);
+  }
+  function fimLousa() {
+    const b = LS.boys, g = LS.girls;
+    const txt = document.getElementById('lsFimTxt');
+    if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); }
+    else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); }
+    else { txt.textContent = 'EMPATE!'; txt.style.color = 'var(--purple)'; somPalmas(); }
+    document.getElementById('lsFimSub').textContent = 'Boys ' + b + ' × ' + g + ' Girls';
+    document.getElementById('lsFim').style.display = 'flex'; setTimeout(somPalmas, 1500);
+  }
 
   /* ── BINGO ── */
   const BG = { fichas: [], restantes: [], unidade: '', todas: false };
@@ -1014,7 +1165,7 @@
     p.style.display = 'none';
     document.body.style.overflow = '';
   }
-  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); });
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); if (document.getElementById('lousa').style.display === 'flex') closeLousa(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
