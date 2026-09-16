@@ -428,6 +428,47 @@
     #lousa .fim .big { font-size: 5rem; }
     #lousa .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; }
     #lousa .fim .sub { font-family: 'Baloo 2', cursive; font-size: 1.4rem; color: #9b8fc4; }
+
+    /* ── DESENHO MISTERIOSO: o traço preto aparece devagar, uma parte por vez, com suspense;
+       quem adivinha ganha o ponto e a ficha colorida se revela por cima. [2026-09-16] */
+    #misterio { display: none; position: fixed; inset: 0; background: #FFFDF7; z-index: 998; flex-direction: column; }
+    #misterio .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+    #misterio .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
+    #misterio .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
+    #misterio .topo .rodada { margin-left: auto; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.2rem; color: #9b8fc4; }
+    #misterio .placar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px; }
+    #misterio .time { position: relative; border-radius: 22px; color: #fff; text-align: center; padding: 8px 6px 10px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 16px rgba(45,27,107,.15); transition: transform .12s; }
+    #misterio .time:active { transform: scale(.97); }
+    #misterio .time.boys { background: #3BADE8; } #misterio .time.girls { background: #FF6B9D; }
+    #misterio .time .nome { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; letter-spacing: .06em; }
+    #misterio .time .pts { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(2.6rem, 9vw, 4rem); line-height: 1; }
+    #misterio .time .menos { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+    #misterio .time.pulo { animation: pulo .5s ease-out; }
+    #misterio.treme { animation: treme-tela .5s; }
+    #misterio .palco { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 0; padding: 8px 12px; }
+    #misterio .quadro { position: relative; width: min(78vw, calc(100vh - 360px)); aspect-ratio: 1 / 1; background: #fff; border-radius: 26px; border: 6px solid #2D1B6B;
+      box-shadow: 0 8px 24px rgba(45,27,107,.18); overflow: hidden; }
+    #misterio .quadro svg { width: 100%; height: 100%; display: block; }
+    #misterio .quadro .vazio { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+    #misterio .quadro .interrogacao { position: absolute; right: 10px; bottom: 6px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 3rem; color: #E6DEFF; animation: pisca-lenta 1.2s infinite; }
+    @keyframes pisca-lenta { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+    #misterio .quadro .revelada { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #fff; opacity: 0; transition: opacity .6s; }
+    #misterio .quadro .revelada.mostra { opacity: 1; }
+    #misterio .quadro .revelada img { width: 86%; height: 86%; object-fit: contain; animation: pula .6s ease-out; }
+    #misterio .palavra { font-family: 'Baloo 2', cursive; font-size: clamp(2rem, 8vw, 4.2rem); color: var(--purple); text-transform: uppercase; letter-spacing: .06em; min-height: 1.2em; line-height: 1.2; opacity: 0; transition: opacity .3s; }
+    #misterio .palavra.mostra { opacity: 1; animation: pula .5s ease-out; }
+    #misterio .acoes { display: flex; gap: 10px; justify-content: center; padding: 4px 12px 16px; }
+    #misterio .acoes button { border: 0; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; padding: 12px 26px; border-radius: 40px; cursor: pointer; }
+    #misterio .acoes .ir { background: #2D1B6B; color: #fff; box-shadow: 0 6px 18px rgba(45,27,107,.35); }
+    #misterio .acoes .ir:disabled { opacity: .4; }
+    #misterio .acoes .olho { background: #fff; color: #2D1B6B; border: 4px solid #2D1B6B; }
+    #misterio .acoes .olho:disabled { opacity: .35; }
+    #msConfete { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
+    #misterio .fim { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: rgba(255,253,247,.96); z-index: 5; }
+    #misterio .fim .big { font-size: 5rem; }
+    #misterio .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; }
+    #misterio .fim .sub { font-family: 'Baloo 2', cursive; font-size: 1.4rem; color: #9b8fc4; }
   </style>
 </head>
 <body>
@@ -446,6 +487,18 @@
 <!-- PEQUENOS: vídeos por lição -->
 <div id="videos-page"></div>
 <div id="player"><div class="fechar" onclick="closePlayer()" aria-label="Voltar">←</div></div>
+<!-- DESENHO MISTERIOSO -->
+<div id="misterio">
+  <div class="topo"><a class="kids-back" href="#" onclick="closeMisterio();return false" aria-label="Voltar">←</a><h2>🕵️ Desenho Misterioso</h2><div class="rodada" id="msRodada"></div></div>
+  <div class="placar">
+    <div class="time boys" id="msBoys" onclick="pontoMisterio('boys')"><button class="menos" onclick="event.stopPropagation();tirarPontoMisterio('boys')" aria-label="Tirar ponto">−</button><div class="nome">BOYS</div><div class="pts" id="msPtsBoys">0</div></div>
+    <div class="time girls" id="msGirls" onclick="pontoMisterio('girls')"><button class="menos" onclick="event.stopPropagation();tirarPontoMisterio('girls')" aria-label="Tirar ponto">−</button><div class="nome">GIRLS</div><div class="pts" id="msPtsGirls">0</div></div>
+  </div>
+  <div class="palco"><div class="quadro" id="msQuadro"><div class="vazio">🕵️</div></div><div class="palavra" id="msPalavra"></div></div>
+  <div class="acoes"><button class="olho" id="msOlho" onclick="revelarMisterio(false)" aria-label="Revelar" disabled>👁️</button><button class="ir" id="msIr" onclick="rodadaMisterio()">WHAT IS IT?</button></div>
+  <canvas id="msConfete"></canvas>
+  <div class="fim" id="msFim"><div class="big">🏆</div><div class="txt" id="msFimTxt"></div><div class="sub" id="msFimSub"></div><button class="de-novo" style="border:4px solid var(--purple);background:#fff;color:var(--purple);font-family:'Baloo 2',cursive;font-weight:800;font-size:1.3rem;padding:12px 30px;border-radius:40px;cursor:pointer" onclick="openMisterio()">🕵️ De novo</button></div>
+</div>
 <!-- LOUSA MÁGICA -->
 <div id="lousa">
   <div class="topo"><a class="kids-back" href="#" onclick="closeLousa();return false" aria-label="Voltar">←</a><h2>🖍️ Lousa Mágica</h2><div class="rodada" id="lsRodada"></div></div>
@@ -707,6 +760,7 @@
       SFX.lousa = (data.sfx && data.sfx.lousa) || {};
       SFX.corrida = (data.sfx && data.sfx.corrida) || [];
       SFX.motiva = (data.sfx && data.sfx.motiva) || [];
+      SFX.misterio = (data.sfx && data.sfx.misterio) || {};
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
@@ -750,6 +804,8 @@
           LOUSA_ITENS = (L.atelier || []).filter(x => x.colorir).map(x => Object.assign({}, x, { audio: (fichas.find(f => f.id === x.id) || {}).audio || '' }));
           if (LOUSA_ITENS.length >= 2) html += `<div class="vcard vc-jogo pc-6" onclick="openLousa()"><div class="tipo">🖍️</div>
               <div class="semficha">🖍️</div><div class="rotulo">Lousa Mágica</div></div>`;
+          if (LOUSA_ITENS.length >= 2) html += `<div class="vcard vc-jogo pc-7" onclick="openMisterio()"><div class="tipo">🕵️</div>
+              <div class="semficha">🕵️</div><div class="rotulo">Misterioso</div></div>`;
           html += `</div>`;
         }
         // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
@@ -831,6 +887,109 @@
 
 
 
+
+  /* ── DESENHO MISTERIOSO ── */
+  const MS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, fase: 'parado', ctl: null, sus: null };
+  function openMisterio() {
+    if (LOUSA_ITENS.length < 2) return;
+    MS.fila = embaralhar(LOUSA_ITENS); MS.total = MS.fila.length; MS.rodada = 0; MS.boys = 0; MS.girls = 0; MS.atual = null; MS.fase = 'parado';
+    const faltam = LOUSA_ITENS.filter(x => !LS.svgs[x.id] && !LS.simples[x.id]).map(x => x.id);
+    if (faltam.length) fetch('https://n8n.gwingles.com/webhook/gw-tracos?ids=' + faltam.join(',')).then(r => r.json())
+      .then(d => { Object.assign(LS.svgs, (d && d.tracos) || {}); Object.assign(LS.simples, (d && d.simples) || {}); }).catch(() => {});
+    document.getElementById('msPtsBoys').textContent = '0'; document.getElementById('msPtsGirls').textContent = '0';
+    document.getElementById('msQuadro').innerHTML = '<div class="vazio">🕵️</div>';
+    document.getElementById('msPalavra').textContent = ''; document.getElementById('msPalavra').className = 'palavra';
+    document.getElementById('msRodada').textContent = '0 / ' + MS.total;
+    document.getElementById('msIr').disabled = false; document.getElementById('msIr').textContent = 'WHAT IS IT?'; document.getElementById('msOlho').disabled = true;
+    document.getElementById('msFim').style.display = 'none';
+    window.scrollTo(0, 0); document.getElementById('misterio').style.display = 'flex';
+    document.body.style.overflow = 'hidden'; history.pushState({ misterio: 1 }, '');
+  }
+  function closeMisterio() { document.getElementById('misterio').style.display = 'none'; document.body.style.overflow = ''; pararMisterio(); if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
+  function pararMisterio() { if (MS.ctl) { MS.ctl.parar(); MS.ctl = null; } suspenseMisterio(false); }
+  function suspenseMisterio(liga) {
+    if (MS.sus) { try { MS.sus.pause(); } catch (e) {} MS.sus = null; }
+    const lista = (SFX.misterio && SFX.misterio.suspense) || [];
+    if (!liga || !lista.length) return;
+    try { MS.sus = new Audio(lista[Math.floor(Math.random() * lista.length)]); MS.sus.loop = true; MS.sus.volume = 0.5; MS.sus.play().catch(() => {}); } catch (e) { MS.sus = null; }
+  }
+  function somMisterio(k) { const u = SFX.misterio && SFX.misterio[k]; const x = Array.isArray(u) ? u[Math.floor(Math.random() * u.length)] : u; if (x) { try { const a = new Audio(x); a.play().catch(() => {}); } catch (e) {} } }
+  function rodadaMisterio() {
+    if (MS.fase === 'desenhando') return;
+    if (!MS.fila.length) { fimMisterio(); return; }
+    pararMisterio(); MS.atual = MS.fila.shift(); MS.rodada++; MS.fase = 'desenhando';
+    document.getElementById('msRodada').textContent = MS.rodada + ' / ' + MS.total;
+    document.getElementById('msIr').disabled = true; document.getElementById('msIr').textContent = 'GUESS! 🤔'; document.getElementById('msOlho').disabled = false;
+    const pal = document.getElementById('msPalavra'); pal.textContent = MS.atual.palavra; pal.className = 'palavra';
+    const q = document.getElementById('msQuadro'); q.innerHTML = '<div class="interrogacao">?</div>';
+    const simp = LS.simples[MS.atual.id], txt = (simp && simp.svg) || LS.svgs[MS.atual.id];
+    suspenseMisterio(true); setTimeout(() => somMisterio('what'), 600);
+    if (!txt) { q.insertAdjacentHTML('afterbegin', `<img src="${MS.atual.ficha}" alt="" style="width:100%;height:100%;object-fit:contain;filter:brightness(0);opacity:.9">`); return; }
+    const doc = new DOMParser().parseFromString(txt, 'image/svg+xml'); const svg = document.importNode(doc.documentElement, true);
+    svg.removeAttribute('width'); svg.removeAttribute('height'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); q.insertBefore(svg, q.firstChild);
+    // BEM DEVAGAR: uma parte por vez, com pausa entre elas -- e na pausa a turma grita o palpite
+    MS.ctl = desenharPorPartes(svg, simp ? 900 : 1400, 1400, () => { MS.fase = 'desenhado'; });
+  }
+  // O DESENHO POR PARTES: agrupa as formas pelo data-passo (o desenho simples da 888) ou, no line art,
+  // em 8 pedaços de comprimento parecido; desenha uma parte, espera, desenha a próxima. Devolve um controle
+  // com parar(), porque o ponto pode chegar no meio.
+  function desenharPorPartes(svg, msPorParte, pausa, fim) {
+    const formas = [...svg.querySelectorAll('path, ellipse, circle, line, polyline, polygon, rect')];
+    const itens = formas.map(el => {
+      const cs = getComputedStyle(el); const temTraco = cs.stroke && cs.stroke !== 'none' && parseFloat(cs.strokeWidth) > 0;
+      let L = 0; if (temTraco) { try { L = el.getTotalLength() || 0; } catch (e) { L = 0; } }
+      const traco = temTraco && L > 0;
+      if (traco) { el.style.strokeDasharray = L + ' ' + L; el.style.strokeDashoffset = L; } else el.style.opacity = 0;
+      return { el: el, traco: traco, L: traco ? L : 0, passo: el.getAttribute('data-passo') };
+    });
+    let partes = [];
+    if (itens.some(x => x.passo)) { const m = {}; itens.forEach(x => { const k = x.passo || '0'; (m[k] = m[k] || []).push(x); }); partes = Object.keys(m).sort((a, b) => Number(a) - Number(b)).map(k => m[k]); }
+    else { const total = itens.reduce((a, x) => a + x.L, 0) || 1, alvo = total / 8; let acc = 0, cur = []; itens.forEach(x => { cur.push(x); acc += x.L; if (acc >= alvo) { partes.push(cur); cur = []; acc = 0; } }); if (cur.length) partes.push(cur); }
+    let vivo = true, timer = 0, anim = 0, i = 0;
+    const desenharParte = (parte, cb) => {
+      const total = parte.reduce((a, x) => a + (x.traco ? x.L : 0), 0);
+      if (!total) { parte.forEach(x => { x.el.style.opacity = 1; }); cb(); return; }
+      const t0 = performance.now();
+      const passo = t => {
+        if (!vivo) return;
+        const k = Math.min((t - t0) / msPorParte, 1), alvo = k * total; let acc = 0;
+        parte.forEach(x => { if (x.traco) { const feito = Math.max(0, Math.min(x.L, alvo - acc)); x.el.style.strokeDashoffset = x.L - feito; acc += x.L; } else if (k > 0.5) x.el.style.opacity = 1; });
+        if (k < 1) anim = requestAnimationFrame(passo); else { parte.forEach(x => { x.el.style.opacity = 1; if (x.traco) x.el.style.strokeDashoffset = 0; }); cb(); }
+      };
+      anim = requestAnimationFrame(passo);
+    };
+    const proxima = () => { if (!vivo) return; if (i >= partes.length) { fim(); return; } somTick(); desenharParte(partes[i++], () => { timer = setTimeout(proxima, pausa); }); };
+    proxima();
+    return { parar: () => { vivo = false; clearTimeout(timer); cancelAnimationFrame(anim); },
+      completar: () => { vivo = false; clearTimeout(timer); cancelAnimationFrame(anim); itens.forEach(x => { x.el.style.opacity = 1; if (x.traco) x.el.style.strokeDashoffset = 0; }); } };
+  }
+  // A REVELAÇÃO: o traço completa, a ficha colorida sobe por cima, a voz diz a palavra. Com ponto: festa.
+  function revelarMisterio(comPonto) {
+    if (!MS.atual || MS.fase === 'parado' || MS.fase === 'revelado') return;
+    if (MS.ctl) { MS.ctl.completar(); MS.ctl = null; } suspenseMisterio(false); MS.fase = 'revelado';
+    document.getElementById('msOlho').disabled = true;
+    const q = document.getElementById('msQuadro'); const rev = document.createElement('div'); rev.className = 'revelada'; rev.innerHTML = `<img src="${MS.atual.ficha}" alt="">`; q.appendChild(rev);
+    somMisterio('revela'); setTimeout(() => { rev.classList.add('mostra'); }, 300);
+    setTimeout(() => { document.getElementById('msPalavra').classList.add('mostra'); if (MS.atual.audio) tocar(MS.atual.audio); }, 900);
+    const ir = document.getElementById('msIr'); ir.textContent = MS.fila.length ? 'NEXT ➡️' : 'ACABOU 🏁'; ir.disabled = false;
+    if (!comPonto) somBoing();
+  }
+  function pontoMisterio(t) {
+    if (MS.fase === 'parado' || MS.fase === 'revelado') { if (MS.fase === 'revelado') { MS[t]++; document.getElementById(t === 'boys' ? 'msPtsBoys' : 'msPtsGirls').textContent = MS[t]; somTime(t); } return; }
+    MS[t]++; document.getElementById(t === 'boys' ? 'msPtsBoys' : 'msPtsGirls').textContent = MS[t];
+    const el = document.getElementById(t === 'boys' ? 'msBoys' : 'msGirls'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
+    revelarMisterio(true); setTimeout(() => { somTime(t); festa(t, 'misterio', 'msConfete'); }, 700);
+  }
+  function tirarPontoMisterio(t) { if (MS[t] > 0) { MS[t]--; document.getElementById(t === 'boys' ? 'msPtsBoys' : 'msPtsGirls').textContent = MS[t]; somBoing(); } }
+  function fimMisterio() {
+    pararMisterio(); const b = MS.boys, g = MS.girls; const txt = document.getElementById('msFimTxt');
+    if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); festa('boys', 'misterio', 'msConfete'); }
+    else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); festa('girls', 'misterio', 'msConfete'); }
+    else { txt.textContent = 'EMPATE!'; txt.style.color = 'var(--purple)'; somPalmas(); }
+    document.getElementById('msFimSub').textContent = 'Boys ' + b + ' × ' + g + ' Girls';
+    document.getElementById('msFim').style.display = 'flex'; setTimeout(somPalmas, 1500);
+  }
+
   /* ── LOUSA MÁGICA ── */
   let LOUSA_ITENS = [];
   const LS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, ocupado: false, svgs: {}, simples: {}, anim: 0 };
@@ -860,9 +1019,10 @@
   }
   // A FESTA DO PONTO: a tela treme e chove confete na cor do time (canvas, sem biblioteca), 2 s.
   let CONF = { anim: 0, pts: [] };
-  function festaLousa(t) {
-    const tela = document.getElementById('lousa'); tela.classList.remove('treme'); void tela.offsetWidth; tela.classList.add('treme');
-    const cv = document.getElementById('lsConfete'); const r = cv.getBoundingClientRect(); cv.width = r.width; cv.height = r.height;
+  function festaLousa(t) { festa(t, 'lousa', 'lsConfete'); }
+  function festa(t, telaId, canvasId) {
+    const tela = document.getElementById(telaId); tela.classList.remove('treme'); void tela.offsetWidth; tela.classList.add('treme');
+    const cv = document.getElementById(canvasId); const r = cv.getBoundingClientRect(); cv.width = r.width; cv.height = r.height;
     const ctx = cv.getContext('2d'); const cores = t === 'boys' ? ['#3BADE8', '#1E7FC0', '#FFFFFF', '#FFD93D'] : ['#FF6B9D', '#E0407A', '#FFFFFF', '#FFD93D'];
     const ox = t === 'boys' ? r.width * 0.25 : r.width * 0.75;
     cancelAnimationFrame(CONF.anim); CONF.pts = [];
@@ -1222,7 +1382,7 @@
     p.style.display = 'none';
     document.body.style.overflow = '';
   }
-  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); if (document.getElementById('lousa').style.display === 'flex') closeLousa(); });
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); if (document.getElementById('lousa').style.display === 'flex') closeLousa(); if (document.getElementById('misterio').style.display === 'flex') closeMisterio(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
