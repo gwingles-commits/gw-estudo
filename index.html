@@ -701,6 +701,7 @@
       const data = await res.json();
       SFX.palmas = (data.sfx && data.sfx.palmas) || [];
       SFX.lousa = (data.sfx && data.sfx.lousa) || {};
+      SFX.corrida = (data.sfx && data.sfx.corrida) || [];
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
@@ -740,7 +741,8 @@
           if (comAudio.length >= 4) html += `<div class="vcard vc-jogo pc-5" onclick="openBingo()"><div class="tipo">🎲</div>
               <div class="semficha">🎲</div><div class="rotulo">Bingo</div></div>`;
           // LOUSA MÁGICA: precisa do traço (SVG_Colorir) para a TV desenhar
-          LOUSA_ITENS = (L.atelier || []).filter(x => x.colorir);
+          // o áudio da palavra mora em fichas[] (Audio EN), o traço em atelier[] -- casa pelo id da 883
+          LOUSA_ITENS = (L.atelier || []).filter(x => x.colorir).map(x => Object.assign({}, x, { audio: (fichas.find(f => f.id === x.id) || {}).audio || '' }));
           if (LOUSA_ITENS.length >= 2) html += `<div class="vcard vc-jogo pc-6" onclick="openLousa()"><div class="tipo">🖍️</div>
               <div class="semficha">🖍️</div><div class="rotulo">Lousa Mágica</div></div>`;
           html += `</div>`;
@@ -844,22 +846,25 @@
     window.scrollTo(0, 0); document.getElementById('lousa').style.display = 'flex';
     document.body.style.overflow = 'hidden'; history.pushState({ lousa: 1 }, '');
   }
-  function closeLousa() { document.getElementById('lousa').style.display = 'none'; document.body.style.overflow = ''; cancelAnimationFrame(LS.anim); if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
+  function closeLousa() { document.getElementById('lousa').style.display = 'none'; document.body.style.overflow = ''; cancelAnimationFrame(LS.anim); corridaLousa(false); if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
   function somTime(t) { const u = SFX.lousa && SFX.lousa[t]; if (u) { try { const a = new Audio(u); a.volume = 0.85; a.play().catch(() => {}); } catch (e) {} } else somPalmas(); }
   function pontoLousa(t) {
     LS[t]++; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t];
     const el = document.getElementById(t === 'boys' ? 'lsBoys' : 'lsGirls'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
-    somTime(t);
+    corridaLousa(false); somTime(t);
   }
   function tirarPontoLousa(t) { if (LS[t] > 0) { LS[t]--; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t]; somBoing(); } }
-  function ouvirLousa() { if (!LS.atual) return; falarPalavraLousa(LS.atual); }
-  // "Let's draw a..." e depois a palavra; sem o clipe da voz, vai só a palavra
-  function falarPalavraLousa(f) {
-    const d = SFX.lousa && SFX.lousa.draw;
-    if (!d) { if (f.audio) tocar(f.audio); return; }
-    try { if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); AUDIO_ATUAL = new Audio(d); let foi = false;
-      const dep = () => { if (foi) return; foi = true; if (f.audio) tocar(f.audio); };
-      AUDIO_ATUAL.onended = dep; setTimeout(dep, 2600); AUDIO_ATUAL.play().catch(dep); } catch (e) { if (f.audio) tocar(f.audio); }
+  function ouvirLousa() { if (!LS.atual || !LS.atual.audio) return; tocar(LS.atual.audio); }
+  // "Let's draw a..." abre a rodada; a PALAVRA (o mesmo `Audio EN` da Roleta e do Bingo) só sai
+  // quando o desenho termina, junto com o texto -- quem reconhece pelo traço fala antes. [2026-09-16]
+  function falarLetsDraw() { const d = SFX.lousa && SFX.lousa.draw; if (d) tocar(d); }
+  // TRILHA DE CORRIDA: toca baixinho enquanto a turma desenha, sorteada entre as da 885 ('Jogo BGM'),
+  // e para no ponto (a torcida entra no lugar) ou na próxima rodada.
+  let BGM = null;
+  function corridaLousa(liga) {
+    if (BGM) { try { BGM.pause(); } catch (e) {} BGM = null; }
+    if (!liga || !SFX.corrida || !SFX.corrida.length) return;
+    try { BGM = new Audio(SFX.corrida[Math.floor(Math.random() * SFX.corrida.length)]); BGM.loop = true; BGM.volume = 0.35; BGM.play().catch(() => {}); } catch (e) { BGM = null; }
   }
   function rodadaLousa() {
     if (LS.ocupado) return;
@@ -869,7 +874,7 @@
     const ir = document.getElementById('lsIr'); ir.disabled = true;
     const pal = document.getElementById('lsPalavra'); pal.textContent = LS.atual.palavra; pal.className = 'palavra';
     const q = document.getElementById('lsQuadro'); q.className = 'quadro'; q.innerHTML = '<div class="lapis" id="lsLapis">✏️</div>';
-    falarPalavraLousa(LS.atual);
+    falarLetsDraw(); corridaLousa(true);
     const comeca = () => {
       // O DESENHO SIMPLES da 888 (6 a 12 formas, o mesmo dos vídeos de desenhar) vem primeiro: é o que
       // uma criança copia na lousa em segundos. Sem ele, cai no line art da 883 (detalhado demais,
@@ -882,7 +887,7 @@
     };
     const depoisDeDesenhar = () => {
       q.classList.add('pisca'); somDing();
-      setTimeout(() => { q.classList.remove('pisca'); pal.classList.add('mostra');
+      setTimeout(() => { q.classList.remove('pisca'); pal.classList.add('mostra'); if (LS.atual.audio) tocar(LS.atual.audio);
         ir.textContent = LS.fila.length ? 'NEXT ➡️' : 'ACABOU 🏁'; ir.disabled = false; LS.ocupado = false; }, 1300);
     };
     setTimeout(comeca, 1200);
@@ -905,21 +910,25 @@
     const total = itens.reduce((a, x) => a + x.L, 0) || 1;
     const vb = (svg.getAttribute('viewBox') || '0 0 958 958').split(/[\s,]+/).map(Number), vw = vb[2] || 958, vh = vb[3] || 958;
     const lapis = document.getElementById('lsLapis'); if (lapis) lapis.style.display = 'block';
-    const t0 = performance.now();
+    const t0 = performance.now(); let pronto = false;
+    // vigia: requestAnimationFrame para em aba escondida; se a animação não fechar no prazo, fecha de uma vez
+    const finaliza = () => { if (pronto) return; pronto = true; clearTimeout(vigia); cancelAnimationFrame(LS.anim);
+      itens.forEach(x => { if (x.traco) x.el.style.strokeDashoffset = 0; else x.el.style.opacity = 1; }); if (lapis) lapis.style.display = 'none'; fim(); };
+    const vigia = setTimeout(finaliza, dur + 1500);
     const passo = t => {
+      if (pronto) return;
       const k = Math.min((t - t0) / dur, 1), alvo = k * total; let acc = 0, ponta = null;
       itens.forEach(x => { const feito = Math.max(0, Math.min(x.L, alvo - acc));
         if (x.traco) { x.el.style.strokeDashoffset = x.L - feito; if (feito > 0 && feito < x.L) { try { ponta = x.el.getPointAtLength(feito); } catch (e) {} } }
         else if (feito >= x.L * 0.5) x.el.style.opacity = 1;
         acc += x.L; });
       if (ponta && lapis) { lapis.style.left = (ponta.x / vw * 100) + '%'; lapis.style.top = (ponta.y / vh * 100) + '%'; }
-      if (k < 1) LS.anim = requestAnimationFrame(passo);
-      else { itens.forEach(x => { if (!x.traco) x.el.style.opacity = 1; }); if (lapis) lapis.style.display = 'none'; fim(); }
+      if (k < 1) LS.anim = requestAnimationFrame(passo); else finaliza();
     };
     LS.anim = requestAnimationFrame(passo);
   }
   function fimLousa() {
-    const b = LS.boys, g = LS.girls;
+    corridaLousa(false); const b = LS.boys, g = LS.girls;
     const txt = document.getElementById('lsFimTxt');
     if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); }
     else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); }
