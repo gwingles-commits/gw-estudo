@@ -421,6 +421,9 @@
     #lousa .acoes .ir { background: var(--purple); color: #fff; box-shadow: 0 6px 18px rgba(108,63,197,.35); }
     #lousa .acoes .ir:disabled { opacity: .4; }
     #lousa .acoes .ouvir { background: #fff; color: var(--purple); border: 4px solid var(--purple); }
+    #lousa.treme { animation: treme-tela .5s; }
+    @keyframes treme-tela { 0%,100% { transform: translate(0,0); } 15% { transform: translate(-12px, 6px) rotate(-.6deg); } 35% { transform: translate(10px, -8px) rotate(.5deg); } 55% { transform: translate(-8px, 4px); } 75% { transform: translate(6px, -3px); } }
+    #lsConfete { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
     #lousa .fim { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: rgba(255,253,247,.96); z-index: 5; }
     #lousa .fim .big { font-size: 5rem; }
     #lousa .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; }
@@ -452,6 +455,7 @@
   </div>
   <div class="palco"><div class="quadro" id="lsQuadro"><div class="vazio">🖍️</div><div class="lapis" id="lsLapis">✏️</div></div><div class="palavra" id="lsPalavra"></div></div>
   <div class="acoes"><button class="ouvir" onclick="ouvirLousa()" aria-label="Ouvir">🔊</button><button class="ir" id="lsIr" onclick="rodadaLousa()">LET'S DRAW!</button></div>
+  <canvas id="lsConfete"></canvas>
   <div class="fim" id="lsFim"><div class="big">🏆</div><div class="txt" id="lsFimTxt"></div><div class="sub" id="lsFimSub"></div><button class="de-novo" style="border:4px solid var(--purple);background:#fff;color:var(--purple);font-family:'Baloo 2',cursive;font-weight:800;font-size:1.3rem;padding:12px 30px;border-radius:40px;cursor:pointer" onclick="openLousa()">🖍️ De novo</button></div>
 </div>
 <!-- BINGO -->
@@ -702,6 +706,7 @@
       SFX.palmas = (data.sfx && data.sfx.palmas) || [];
       SFX.lousa = (data.sfx && data.sfx.lousa) || {};
       SFX.corrida = (data.sfx && data.sfx.corrida) || [];
+      SFX.motiva = (data.sfx && data.sfx.motiva) || [];
       const emoji = ANO_EMOJIS[serie] || '⭐';
       const nome  = ANO_NOMES[serie] || data.rotulo || serie;
       const licoes = data.licoes || [];
@@ -851,7 +856,26 @@
   function pontoLousa(t) {
     LS[t]++; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t];
     const el = document.getElementById(t === 'boys' ? 'lsBoys' : 'lsGirls'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
-    corridaLousa(false); somTime(t);
+    corridaLousa(false); somTime(t); festaLousa(t);
+  }
+  // A FESTA DO PONTO: a tela treme e chove confete na cor do time (canvas, sem biblioteca), 2 s.
+  let CONF = { anim: 0, pts: [] };
+  function festaLousa(t) {
+    const tela = document.getElementById('lousa'); tela.classList.remove('treme'); void tela.offsetWidth; tela.classList.add('treme');
+    const cv = document.getElementById('lsConfete'); const r = cv.getBoundingClientRect(); cv.width = r.width; cv.height = r.height;
+    const ctx = cv.getContext('2d'); const cores = t === 'boys' ? ['#3BADE8', '#1E7FC0', '#FFFFFF', '#FFD93D'] : ['#FF6B9D', '#E0407A', '#FFFFFF', '#FFD93D'];
+    const ox = t === 'boys' ? r.width * 0.25 : r.width * 0.75;
+    cancelAnimationFrame(CONF.anim); CONF.pts = [];
+    for (let i = 0; i < 160; i++) { const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.6, v = 9 + Math.random() * 11;
+      CONF.pts.push({ x: ox, y: r.height * 0.3, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, w: 6 + Math.random() * 8, h: 4 + Math.random() * 6, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4, c: cores[i % cores.length], vida: 1 }); }
+    const t0 = performance.now();
+    const passo = tt => {
+      const k = (tt - t0) / 2200; ctx.clearRect(0, 0, cv.width, cv.height);
+      CONF.pts.forEach(p => { p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vida = 1 - k;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = Math.max(0, Math.min(1, p.vida * 1.5)); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); });
+      if (k < 1) CONF.anim = requestAnimationFrame(passo); else ctx.clearRect(0, 0, cv.width, cv.height);
+    };
+    CONF.anim = requestAnimationFrame(passo);
   }
   function tirarPontoLousa(t) { if (LS[t] > 0) { LS[t]--; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t]; somBoing(); } }
   function ouvirLousa() { if (!LS.atual || !LS.atual.audio) return; tocar(LS.atual.audio); }
@@ -860,8 +884,22 @@
   function falarLetsDraw() { const d = SFX.lousa && SFX.lousa.draw; if (d) tocar(d); }
   // TRILHA DE CORRIDA: toca baixinho enquanto a turma desenha, sorteada entre as da 885 ('Jogo BGM'),
   // e para no ponto (a torcida entra no lugar) ou na próxima rodada.
-  let BGM = null;
+  let BGM = null, MOTIVA = null;
+  // O MOTIVADOR: a mesma voz das fichas gritando "Go, go, go!", "Faster!"… a cada ~6 s enquanto a turma
+  // desenha; a trilha abaixa enquanto ele fala. Começa quando o desenho da TV termina (antes é só olhar).
+  function motivarLousa(liga) {
+    if (MOTIVA) { clearTimeout(MOTIVA); MOTIVA = null; }
+    if (!liga || !SFX.motiva || !SFX.motiva.length) return;
+    const fala = () => {
+      if (!BGM) return;
+      try { const a = new Audio(SFX.motiva[Math.floor(Math.random() * SFX.motiva.length)]); a.volume = 1;
+        if (BGM) BGM.volume = 0.15; a.onended = () => { if (BGM) BGM.volume = 0.35; }; a.play().catch(() => {}); } catch (e) {}
+      MOTIVA = setTimeout(fala, 5000 + Math.random() * 3000);
+    };
+    MOTIVA = setTimeout(fala, 2500);
+  }
   function corridaLousa(liga) {
+    motivarLousa(false);
     if (BGM) { try { BGM.pause(); } catch (e) {} BGM = null; }
     if (!liga || !SFX.corrida || !SFX.corrida.length) return;
     try { BGM = new Audio(SFX.corrida[Math.floor(Math.random() * SFX.corrida.length)]); BGM.loop = true; BGM.volume = 0.35; BGM.play().catch(() => {}); } catch (e) { BGM = null; }
@@ -887,7 +925,7 @@
     };
     const depoisDeDesenhar = () => {
       q.classList.add('pisca'); somDing();
-      setTimeout(() => { q.classList.remove('pisca'); pal.classList.add('mostra'); if (LS.atual.audio) tocar(LS.atual.audio);
+      setTimeout(() => { q.classList.remove('pisca'); pal.classList.add('mostra'); if (LS.atual.audio) tocar(LS.atual.audio); motivarLousa(true);
         ir.textContent = LS.fila.length ? 'NEXT ➡️' : 'ACABOU 🏁'; ir.disabled = false; LS.ocupado = false; }, 1300);
     };
     setTimeout(comeca, 1200);
@@ -930,8 +968,8 @@
   function fimLousa() {
     corridaLousa(false); const b = LS.boys, g = LS.girls;
     const txt = document.getElementById('lsFimTxt');
-    if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); }
-    else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); }
+    if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); festaLousa('boys'); }
+    else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); festaLousa('girls'); }
     else { txt.textContent = 'EMPATE!'; txt.style.color = 'var(--purple)'; somPalmas(); }
     document.getElementById('lsFimSub').textContent = 'Boys ' + b + ' × ' + g + ' Girls';
     document.getElementById('lsFim').style.display = 'flex'; setTimeout(somPalmas, 1500);
