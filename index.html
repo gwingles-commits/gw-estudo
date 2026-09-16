@@ -336,10 +336,16 @@
     #quale .ouvir { width: min(38vw, 150px); height: min(38vw, 150px); border-radius: 50%; border: 0; background: var(--purple); color: #fff; font-size: 4rem;
       margin: 8px auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 22px rgba(108,63,197,.35); cursor: pointer; }
     #quale .ouvir:active { transform: scale(.95); }
-    #quale .opcoes { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 8px 12px 20px; align-content: center; }
+    #quale .opcoes { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 8px 12px 20px; align-content: center; justify-items: center; }
     @media (max-width: 480px) { #quale .opcoes { grid-template-columns: repeat(2, 1fr); } }
-    #quale .opc { background: #fff; border: 6px solid #E6DEFF; border-radius: 26px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s, border-color .15s; }
+    /* a ficha cabe na tela em qualquer formato: na TV (paisagem) a altura manda, no celular a largura */
+    #quale .opc { position: relative; background: #fff; border: 6px solid #E6DEFF; border-radius: 26px; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+      width: min(100%, calc(100vh - 270px)); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s, border-color .15s; }
+    @media (max-width: 480px) { #quale .opc { width: min(100%, calc(50vh - 150px)); } }
+    /* o NUMERO da ficha: a crianca responde "two!" em vez de apontar, e a cor muda a cada rodada
+       para revisar as cores de carona. [2026-09-15] */
+    #quale .num { position: absolute; top: -14px; left: -14px; width: 64px; height: 64px; border-radius: 50%; color: #fff; font-family: 'Baloo 2', cursive;
+      font-weight: 800; font-size: 2rem; display: flex; align-items: center; justify-content: center; border: 5px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
     #quale .opc img { width: 78%; height: 78%; object-fit: contain; }
     #quale .opc.certa { border-color: #4CAF77; transform: scale(1.08); box-shadow: 0 0 0 8px rgba(76,175,119,.25); }
     #quale .opc.errada { border-color: #E53935; animation: treme .4s; opacity: .35; }
@@ -738,7 +744,9 @@
     const opcoes = embaralhar([QE.alvo].concat(outras));
     document.getElementById('qeEstrelas').textContent = '⭐'.repeat(QE.acertos) + '☆'.repeat(Math.max(0, QE.rodada - QE.acertos));
     const box = document.getElementById('qeOpcoes'); box.innerHTML = '';
-    opcoes.forEach(f => { const d = document.createElement('div'); d.className = 'opc'; d.innerHTML = `<img src="${f.ficha}" alt="">`; d.onclick = () => responder(f, d); box.appendChild(d); });
+    const cores = embaralhar(['#E53935', '#1E88E5', '#FDD835', '#43A047', '#FB8C00', '#8E24AA', '#F06292', '#8D6E63']).slice(0, opcoes.length);
+    opcoes.forEach((f, i) => { const d = document.createElement('div'); d.className = 'opc';
+      d.innerHTML = `<div class="num" style="background:${cores[i]}">${i + 1}</div><img src="${f.ficha}" alt="">`; d.onclick = () => responder(f, d); box.appendChild(d); });
     setTimeout(tocarAlvo, 350);
   }
   function tocarAlvo() { if (QE.alvo && QE.alvo.audio) tocar(QE.alvo.audio); }
