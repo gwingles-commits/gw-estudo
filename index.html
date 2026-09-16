@@ -347,12 +347,38 @@
     #quale .num { position: absolute; top: -14px; left: -14px; width: 64px; height: 64px; border-radius: 50%; color: #fff; font-family: 'Baloo 2', cursive;
       font-weight: 800; font-size: 2rem; display: flex; align-items: center; justify-content: center; border: 5px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
     #quale .opc img { width: 78%; height: 78%; object-fit: contain; }
-    #quale .opc.certa { border-color: #4CAF77; transform: scale(1.08); box-shadow: 0 0 0 8px rgba(76,175,119,.25); }
-    #quale .opc.errada { border-color: #E53935; animation: treme .4s; opacity: .35; }
+    #quale .opc.certa { border-color: #4CAF77 !important; transform: scale(1.08); box-shadow: 0 0 0 8px rgba(76,175,119,.25); }
+    #quale .opc.errada { animation: treme .4s; opacity: .35; }
     @keyframes treme { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
     #quale .fim { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; background: rgba(255,253,247,.96); z-index: 5; }
     #quale .fim .big { font-size: 5rem; }
     #quale .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2rem; color: var(--purple); }
+
+    /* ── BINGO: a TV sorteia com voz, a crianca marca na cartela impressa ── [2026-09-15] */
+    #bingo { display: none; position: fixed; inset: 0; background: #FFFDF7; z-index: 998; flex-direction: column; }
+    #bingo .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+    #bingo .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
+    #bingo .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
+    #bingo .topo .imprimir { margin-left: auto; border: 4px solid var(--purple); background: #fff; color: var(--purple); border-radius: 30px; padding: 8px 14px; font-family: 'Baloo 2', cursive; font-weight: 800; cursor: pointer; }
+    #bingo .palco { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 0; padding: 4px 12px; }
+    #bingo .sorteada { width: min(70vw, calc(100vh - 330px)); aspect-ratio: 1 / 1; background: #fff; border-radius: 26px; border: 6px solid var(--purple);
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(45,27,107,.12); }
+    #bingo .sorteada img { width: 82%; height: 82%; object-fit: contain; animation: pula .5s ease-out; }
+    #bingo .sorteada .vazio { font-size: 4rem; }
+    #bingo .sortear { border: 0; background: var(--purple); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.5rem; padding: 14px 40px; border-radius: 40px; box-shadow: 0 6px 18px rgba(108,63,197,.35); cursor: pointer; }
+    #bingo .sortear:disabled { opacity: .4; }
+    #bingo .ja { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 6px 12px 14px; }
+    #bingo .ja img { width: 52px; height: 52px; object-fit: contain; background: #fff; border-radius: 12px; border: 3px solid #E6DEFF; }
+    /* cartelas: so aparecem na impressao */
+    #cartelas { display: none; }
+    @media print {
+      body > *:not(#cartelas) { display: none !important; }
+      #cartelas { display: block !important; }
+      .cartela { display: inline-grid; grid-template-columns: repeat(var(--c, 2), 1fr); gap: 4mm; border: 1.2mm solid #6C3FC5; border-radius: 6mm; padding: 5mm; margin: 4mm; page-break-inside: avoid; vertical-align: top; }
+      .cartela .cel { width: 32mm; height: 32mm; border: .6mm dashed #bbb; border-radius: 3mm; display: flex; align-items: center; justify-content: center; }
+      .cartela .cel img { width: 90%; height: 90%; object-fit: contain; }
+      .cartela .tit { grid-column: 1 / -1; text-align: center; font-family: 'Baloo 2', cursive; font-size: 5mm; color: #6C3FC5; }
+    }
   </style>
 </head>
 <body>
@@ -371,6 +397,14 @@
 <!-- PEQUENOS: vídeos por lição -->
 <div id="videos-page"></div>
 <div id="player"><div class="fechar" onclick="closePlayer()" aria-label="Voltar">←</div></div>
+<!-- BINGO -->
+<div id="bingo">
+  <div class="topo"><a class="kids-back" href="#" onclick="closeBingo();return false" aria-label="Voltar">←</a><h2>🎲 Bingo</h2>
+    <button class="imprimir" onclick="imprimirCartelas()">🖨️ Cartelas</button></div>
+  <div class="palco"><div class="sorteada" id="bgSorteada"><div class="vazio">🎲</div></div><button class="sortear" id="bgSortear" onclick="sortearBingo()">SORTEAR!</button></div>
+  <div class="ja" id="bgJa"></div>
+</div>
+<div id="cartelas"></div>
 <!-- QUAL É? -->
 <div id="quale">
   <div class="topo"><a class="kids-back" href="#" onclick="closeQuale();return false" aria-label="Voltar">←</a><h2>🔊 Qual é?</h2><div class="estrelas" id="qeEstrelas"></div></div>
@@ -643,6 +677,8 @@
               <div class="semficha">🎡</div><div class="rotulo">Roleta</div></div>`;
           if (comAudio.length >= 3) html += `<div class="vcard vc-jogo pc-4" onclick="openQuale()"><div class="tipo">🔊</div>
               <div class="semficha">👂</div><div class="rotulo">Qual é?</div></div>`;
+          if (comAudio.length >= 4) html += `<div class="vcard vc-jogo pc-5" onclick="openBingo()"><div class="tipo">🎲</div>
+              <div class="semficha">🎲</div><div class="rotulo">Bingo</div></div>`;
           html += `</div>`;
         }
         // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
@@ -722,6 +758,42 @@
   }
   function somPalmas() { if (SFX.palmas.length) { try { const a = new Audio(SFX.palmas[Math.floor(Math.random() * SFX.palmas.length)]); a.volume = 0.7; a.play().catch(() => {}); } catch (e) {} } else somDing(); }
 
+
+  /* ── BINGO ── */
+  const BG = { fichas: [], restantes: [], unidade: '' };
+  function openBingo() {
+    BG.fichas = ROLETA_FICHAS.filter(f => f.audio); if (BG.fichas.length < 4) return;
+    BG.restantes = embaralhar(BG.fichas);
+    document.getElementById('bgSorteada').innerHTML = '<div class="vazio">🎲</div>'; document.getElementById('bgJa').innerHTML = '';
+    document.getElementById('bgSortear').disabled = false; document.getElementById('bgSortear').textContent = 'SORTEAR!';
+    window.scrollTo(0, 0); document.getElementById('bingo').style.display = 'flex';
+    document.body.style.overflow = 'hidden'; history.pushState({ bingo: 1 }, '');
+  }
+  function closeBingo() { document.getElementById('bingo').style.display = 'none'; document.body.style.overflow = ''; if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
+  function sortearBingo() {
+    if (!BG.restantes.length) return;
+    const f = BG.restantes.shift();
+    // a voz diz a palavra ANTES de a ficha aparecer: quem sabe marca pelo ouvido, quem nao sabe confere pela imagem
+    somTick(); tocar(f.audio);
+    setTimeout(() => {
+      document.getElementById('bgSorteada').innerHTML = `<img src="${f.ficha}" alt="">`;
+      const j = document.createElement('img'); j.src = f.ficha; document.getElementById('bgJa').appendChild(j);
+      if (!BG.restantes.length) { document.getElementById('bgSortear').disabled = true; document.getElementById('bgSortear').textContent = 'ACABOU! 🎉'; setTimeout(somPalmas, 400); }
+    }, 1500);
+  }
+  // CARTELAS: cada cartela e um sorteio de 4 (ou 6, se a licao tem 8+) fichas da licao, impressas
+  // pelo proprio navegador. Quem imprime e o pai ou a professora; a crianca marca com giz.
+  function imprimirCartelas() {
+    const n = BG.fichas.length >= 8 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 12;
+    let html = '';
+    for (let k = 0; k < quantas; k++) {
+      const esc = embaralhar(BG.fichas).slice(0, n);
+      html += `<div class="cartela" style="--c:${cols}"><div class="tit">BINGO · ${k + 1}</div>` + esc.map(f => `<div class="cel"><img src="${f.ficha}" alt=""></div>`).join('') + `</div>`;
+    }
+    document.getElementById('cartelas').innerHTML = html;
+    setTimeout(() => window.print(), 300);
+  }
+
   /* ── QUAL É? ── */
   let AUDIO_ATUAL = null;
   function tocar(url) { try { if (AUDIO_ATUAL) { AUDIO_ATUAL.pause(); } AUDIO_ATUAL = new Audio(url); AUDIO_ATUAL.play().catch(() => {}); } catch (e) {} }
@@ -746,6 +818,7 @@
     const box = document.getElementById('qeOpcoes'); box.innerHTML = '';
     const cores = embaralhar(['#E53935', '#1E88E5', '#FDD835', '#43A047', '#FB8C00', '#8E24AA', '#F06292', '#8D6E63']).slice(0, opcoes.length);
     opcoes.forEach((f, i) => { const d = document.createElement('div'); d.className = 'opc';
+      d.style.borderColor = cores[i];
       d.innerHTML = `<div class="num" style="background:${cores[i]}">${i + 1}</div><img src="${f.ficha}" alt="">`; d.onclick = () => responder(f, d); box.appendChild(d); });
     setTimeout(tocarAlvo, 350);
   }
@@ -911,7 +984,7 @@
     p.style.display = 'none';
     document.body.style.overflow = '';
   }
-  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); });
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
