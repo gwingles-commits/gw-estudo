@@ -775,7 +775,9 @@
     document.getElementById('bgSortear').disabled = false; document.getElementById('bgSortear').textContent = 'SORTEAR!';
   }
   function openBingo() {
-    BG.todas = false; document.getElementById('bgTodas').classList.remove('on');
+    // PADRAO: junta o vocabulario das licoes da turma (pedido do Rodrigo, 15/09) -- mais fichas,
+    // cartelas todas diferentes, e um vencedor so. O botao volta para "so esta licao".
+    BG.todas = TODAS_FICHAS.length >= 6; document.getElementById('bgTodas').classList.toggle('on', BG.todas);
     document.getElementById('bgTodas').style.display = (TODAS_FICHAS.length > ROLETA_FICHAS.filter(f => f.audio).length) ? '' : 'none';
     BG.fichas = fichasDoBingo(); if (BG.fichas.length < 4) return;
     BG.restantes = embaralhar(BG.fichas);
@@ -799,7 +801,8 @@
   // CARTELAS: cada cartela e um sorteio de 4 (ou 6, se a licao tem 8+) fichas da licao, impressas
   // pelo proprio navegador. Quem imprime e o pai ou a professora; a crianca marca com giz.
   function imprimirCartelas() {
-    const n = BG.fichas.length >= 8 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 12;
+    // 6 fichas por cartela (3 x 2); so cai para 4 se a licao tiver menos de 6 fichas
+    const n = BG.fichas.length >= 6 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 12;
     let html = ''; const vistas = {};
     for (let k = 0; k < quantas; k++) {
       if (k % 4 === 0) html += '<div class="folha-bingo">';
