@@ -377,11 +377,13 @@
       #cartelas { display: block !important; }
       @page { size: A4; margin: 10mm; }
       /* 4 cartelas por folha A4 (2 x 2), cada uma com a grade de fichas ocupando o quarto da pagina */
-      .folha-bingo { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 6mm; height: 275mm; page-break-after: always; }
-      .cartela { display: grid; grid-template-columns: repeat(var(--c, 2), 1fr); grid-auto-rows: 1fr; gap: 3mm; border: 1.2mm solid #6C3FC5; border-radius: 6mm; padding: 4mm; min-height: 0; }
-      .cartela .cel { border: .6mm dashed #bbb; border-radius: 3mm; display: flex; align-items: center; justify-content: center; min-height: 0; }
-      .cartela .cel img { width: 86%; height: 86%; object-fit: contain; }
-      .cartela .tit { grid-column: 1 / -1; text-align: center; font-family: 'Baloo 2', cursive; font-size: 5mm; color: #6C3FC5; align-self: center; }
+      /* 6 cartelas por folha A4 (3 linhas x 2), so as fichas; logo e @gwingles no rodape de cada uma */
+      .folha-bingo { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 4mm; height: 275mm; page-break-after: always; }
+      .cartela { display: grid; grid-template-columns: repeat(var(--c, 3), 1fr); grid-template-rows: 1fr 1fr auto; gap: 2.5mm; border: 1mm solid #6C3FC5; border-radius: 5mm; padding: 3.5mm; min-height: 0; }
+      .cartela .cel { border: .5mm dashed #bbb; border-radius: 2.5mm; display: flex; align-items: center; justify-content: center; min-height: 0; }
+      .cartela .cel img { width: 88%; height: 88%; object-fit: contain; }
+      .cartela .marca { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 2mm; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 3.2mm; color: #6C3FC5; }
+      .cartela .marca img { height: 6mm; width: auto; }
     }
   </style>
 </head>
@@ -801,20 +803,24 @@
   // CARTELAS: cada cartela e um sorteio de 4 (ou 6, se a licao tem 8+) fichas da licao, impressas
   // pelo proprio navegador. Quem imprime e o pai ou a professora; a crianca marca com giz.
   function imprimirCartelas() {
-    // 6 fichas por cartela (3 x 2); so cai para 4 se a licao tiver menos de 6 fichas
-    const n = BG.fichas.length >= 6 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 12;
+    // 6 fichas por cartela (3 x 2), 6 cartelas por folha, 3 folhas = 18 cartelas
+    const n = BG.fichas.length >= 6 ? 6 : 4, cols = n === 6 ? 3 : 2, quantas = 18, porFolha = 6;
+    const LOGO = 'https://baserow.gwingles.com/media/user_files/mostNvfhRfWm96RBFETJipRDvZnz7fjd_6ffd599fcb5dd310cf8a53d57738bfa0481f8af96dfc60f50d7158e6ad7c7cf9.png';
     let html = ''; const vistas = {};
     for (let k = 0; k < quantas; k++) {
-      if (k % 4 === 0) html += '<div class="folha-bingo">';
+      if (k % porFolha === 0) html += '<div class="folha-bingo">';
       // nenhuma cartela igual a outra (mesmo conjunto de fichas), enquanto houver combinacao nova
       let esc = embaralhar(BG.fichas).slice(0, n), chave = esc.map(f => f.id).sort().join(','), tent = 0;
       while (vistas[chave] && tent++ < 60) { esc = embaralhar(BG.fichas).slice(0, n); chave = esc.map(f => f.id).sort().join(','); }
       vistas[chave] = 1;
-      html += `<div class="cartela" style="--c:${cols}"><div class="tit">BINGO · ${k + 1}</div>` + esc.map(f => `<div class="cel"><img src="${f.ficha}" alt=""></div>`).join('') + `</div>`;
-      if (k % 4 === 3 || k === quantas - 1) html += '</div>';
+      html += `<div class="cartela" style="--c:${cols}">` + esc.map(f => `<div class="cel"><img src="${f.ficha}" alt=""></div>`).join('')
+        + `<div class="marca"><img src="${LOGO}" alt="">@gwingles</div></div>`;
+      if (k % porFolha === porFolha - 1 || k === quantas - 1) html += '</div>';
     }
     document.getElementById('cartelas').innerHTML = html;
-    setTimeout(() => window.print(), 300);
+    // so imprime depois de TODAS as imagens carregarem -- senao sai celula em branco
+    const imgs = [...document.querySelectorAll('#cartelas img')];
+    Promise.all(imgs.map(im => (im.complete ? Promise.resolve() : new Promise(r => { im.onload = r; im.onerror = r; })))).then(() => setTimeout(() => window.print(), 200));
   }
 
   /* ── QUAL É? ── */
