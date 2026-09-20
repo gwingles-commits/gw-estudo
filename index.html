@@ -495,6 +495,14 @@
     #rolConfete, #qeConfete { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
     #roleta .suspense { position: absolute; inset: 0; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 4; pointer-events: none; }
     #roleta .suspense span { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(5rem, 22vw, 11rem); color: var(--purple); text-shadow: 0 6px 0 #fff, 0 0 30px rgba(255,255,255,.9); animation: pisca-lenta .6s infinite; }
+
+    /* ── LET'S DRAW: tela com os vídeos de desenhar (888) e as folhas de desenhar (889) ── [2026-09-20] */
+    #draw { display: none; position: fixed; inset: 0; background: #F3F0FF; z-index: 998; flex-direction: column; }
+    #draw .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+    #draw .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
+    #draw .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
+    #draw .corpo { flex: 1; overflow-y: auto; padding: 4px 14px 30px; }
+    .vc-desenho .tipo { background: #E0533B; }
   </style>
 </head>
 <body>
@@ -536,6 +544,11 @@
   <div class="acoes"><button class="ouvir" onclick="ouvirLousa()" aria-label="Ouvir">🔊</button><button class="ir" id="lsIr" onclick="rodadaLousa()">LET'S DRAW!</button></div>
   <canvas id="lsConfete"></canvas>
   <div class="fim" id="lsFim"><div class="big">🏆</div><div class="txt" id="lsFimTxt"></div><div class="sub" id="lsFimSub"></div><button class="de-novo" style="border:4px solid var(--purple);background:#fff;color:var(--purple);font-family:'Baloo 2',cursive;font-weight:800;font-size:1.3rem;padding:12px 30px;border-radius:40px;cursor:pointer" onclick="openLousa()">🖍️ De novo</button></div>
+</div>
+<!-- LET'S DRAW: vídeos de desenhar + folhas de desenhar da lição -->
+<div id="draw">
+  <div class="topo"><a class="kids-back" href="#" onclick="closeDraw();return false" aria-label="Voltar">←</a><h2>🖍️ Let's draw!</h2></div>
+  <div class="corpo" id="drawCorpo"></div>
 </div>
 <!-- BINGO -->
 <div id="bingo">
@@ -823,6 +836,10 @@
           html += `<div class="vcard vc-${v.tipo} pc-${cor}" onclick="openPlayer('${ytId(v.youtube) || ''}')">
             <div class="tipo">${t.emoji}</div>${tomada}${img}<div class="rotulo">${v.titulo || t.nome}</div></div>`;
         });
+        // o card DRAW fica na grade, ao lado dos vídeos: abre a tela Let's draw (vídeos + folhas de desenhar)
+        DRAW_ITENS = { videos: videosDesenho, folhas: folhasDesenho, unidade: L.unidade };
+        if (videosDesenho.length || folhasDesenho.length) html += `<div class="vcard vc-desenho pc-${pecas.length % 8}" onclick="openDraw()"><div class="tipo">🖍️</div>
+            <div class="semficha">🖍️</div><div class="rotulo">Let's draw!</div></div>`;
         html += `</div></section>`;
         // JOGOS: a Roleta usa as fichas da lição (qualquer palavra com imagem)
         const fichas = L.fichas || [];
@@ -844,26 +861,6 @@
           if (LOUSA_ITENS.length >= 2) html += `<div class="vcard vc-jogo pc-7" onclick="openMisterio()"><div class="tipo">🕵️</div>
               <div class="semficha">🕵️</div><div class="rotulo">Misterioso</div></div>`;
           html += `</div>`;
-        }
-        // LET'S DRAW! — os vídeos de desenhar passo a passo e as folhas de desenhar da 889
-        if (videosDesenho.length || folhasDesenho.length) {
-          html += `<div class="secao-tit">🖍️ Let's draw!</div>`;
-          if (videosDesenho.length) {
-            html += `<div class="kids-grid">`;
-            videosDesenho.forEach((v, i) => {
-              const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">🖍️</div>`;
-              html += `<div class="vcard vc-desenho pc-${i % 8}" onclick="openPlayer('${ytId(v.youtube) || ''}')"><div class="tipo">🖍️</div>${img}<div class="rotulo">${v.titulo}</div></div>`;
-            });
-            html += `</div>`;
-          }
-          if (folhasDesenho.length) {
-            html += `<div class="folhas" style="margin-top:10px">`;
-            const nomeTipo = t => String(t || '').toLowerCase().replace(/_/g, ' ');
-            folhasDesenho.forEach(f => {
-              html += `<a class="folha" href="${f.link}" target="_blank" rel="noopener"><span class="ic">🖍️</span><div><b>${(f.palavras || []).join(' + ')}</b><small>${nomeTipo(f.frente)}${f.verso ? ' · verso: ' + nomeTipo(f.verso) : ''}</small></div></a>`;
-            });
-            html += `</div>`;
-          }
         }
         // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
         const at = L.atelier || [];
@@ -1192,6 +1189,28 @@
     document.getElementById('lsFim').style.display = 'flex'; setTimeout(somPalmas, 1500);
   }
 
+
+  /* ── LET'S DRAW ── */
+  let DRAW_ITENS = { videos: [], folhas: [], unidade: '' };
+  function openDraw() {
+    const d = DRAW_ITENS; let html = '';
+    if (d.videos.length) {
+      html += `<div class="secao-tit">🎬 Vídeos de desenhar</div><div class="kids-grid">`;
+      d.videos.forEach((v, i) => { const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">🖍️</div>`;
+        html += `<div class="vcard vc-desenho pc-${i % 8}" onclick="openPlayer('${ytId(v.youtube) || ''}')"><div class="tipo">🖍️</div>${img}<div class="rotulo">${v.titulo}</div></div>`; });
+      html += `</div>`;
+    }
+    if (d.folhas.length) {
+      const nomeTipo = t => String(t || '').toLowerCase().replace(/_/g, ' ');
+      html += `<div class="secao-tit">🖨️ Folhas de desenhar</div><div class="folhas">`;
+      d.folhas.forEach(f => { html += `<a class="folha" href="${f.link}" target="_blank" rel="noopener"><span class="ic">🖍️</span><div><b>${(f.palavras || []).join(' + ')}</b><small>${nomeTipo(f.frente)}${f.verso ? ' · verso: ' + nomeTipo(f.verso) : ''}</small></div></a>`; });
+      html += `</div>`;
+    }
+    document.getElementById('drawCorpo').innerHTML = html || '<div class="kids-vazio"><span class="emoji">🖍️</span>Os desenhos desta lição estão chegando!</div>';
+    window.scrollTo(0, 0); document.getElementById('draw').style.display = 'flex'; document.body.style.overflow = 'hidden'; history.pushState({ draw: 1 }, '');
+  }
+  function closeDraw() { document.getElementById('draw').style.display = 'none'; document.body.style.overflow = ''; }
+
   /* ── BINGO ── */
   const BG = { fichas: [], restantes: [], unidade: '', todas: false };
   function fichasDoBingo() { return (BG.todas && TODAS_FICHAS.length >= 4) ? TODAS_FICHAS : ROLETA_FICHAS.filter(f => f.audio); }
@@ -1485,7 +1504,7 @@
     p.style.display = 'none';
     document.body.style.overflow = '';
   }
-  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); if (document.getElementById('lousa').style.display === 'flex') closeLousa(); if (document.getElementById('misterio').style.display === 'flex') closeMisterio(); });
+  window.addEventListener('popstate', () => { if (document.getElementById('player').style.display === 'block') closePlayer(); if (document.getElementById('atelie').style.display === 'flex') closeAtelie(); if (document.getElementById('roleta').style.display === 'flex') closeRoleta(); if (document.getElementById('quale').style.display === 'flex') closeQuale(); if (document.getElementById('bingo').style.display === 'flex') closeBingo(); if (document.getElementById('lousa').style.display === 'flex') closeLousa(); if (document.getElementById('misterio').style.display === 'flex') closeMisterio(); if (document.getElementById('draw').style.display === 'flex') closeDraw(); });
 
   /* ── PÁGINA DA LIÇÃO ── */
   async function loadLicao(licaoId) {
