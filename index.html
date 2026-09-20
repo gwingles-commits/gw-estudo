@@ -682,7 +682,7 @@
   // Turmas dos pequenos: quem navega e o pai ou a professora; a crianca reconhece o desenho.
   const PEQUENOS    = ['M','J1','J2','1'];
   // A cor e SEMPRE a mesma para o mesmo tipo (roxo chant, laranja rap/musica, rosa funk, verde quiz).
-  const TIPO = { episodio:{emoji:'🎬',nome:'Episódio'}, historia:{emoji:'📖',nome:'História'}, chant:{emoji:'🎵',nome:'Chant'}, musica:{emoji:'🎤',nome:'Música'}, rap:{emoji:'🎤',nome:'Rap'}, funk:{emoji:'🪩',nome:'Funk'}, quiz:{emoji:'❓',nome:'Quiz'}, jogo:{emoji:'🎮',nome:'Jogo'} };
+  const TIPO = { episodio:{emoji:'🎬',nome:'Episódio'}, historia:{emoji:'📖',nome:'História'}, chant:{emoji:'🎵',nome:'Chant'}, musica:{emoji:'🎤',nome:'Música'}, rap:{emoji:'🎤',nome:'Rap'}, funk:{emoji:'🪩',nome:'Funk'}, quiz:{emoji:'❓',nome:'Quiz'}, desenho:{emoji:'🖍️',nome:'Desenhar'}, jogo:{emoji:'🎮',nome:'Jogo'} };
   const UNIDADE_EMOJI = { food:'🍎', fruit:'🍎', vegetables:'🥕', animals:'🐄', farmer:'🐔', farm:'🐔', pets:'🐶', bedroom:'🛏️', quarto:'🛏️', 'my clothes':'👕', clothes:'👕', colors:'🌈', cores:'🌈', family:'👨‍👩‍👧', numbers:'🔢' };
   const LICAO_ICONS = ['📚','🎒','🌍','🎵','💡','🔬','🎨','🏅'];
 
@@ -810,7 +810,7 @@
         const pecas = [];
         (L.videos || []).forEach(v => {
           const t = TIPO[v.tipo] || TIPO.chant;
-          const chave = v.tipo === 'quiz' ? 'q' + (v.linha868 || v.linha885) : String(v.linha885);
+          const chave = v.tipo === 'quiz' ? 'q' + (v.linha868 || v.linha885) : (v.tipo === 'desenho' ? 'd' + v.linha888 : String(v.linha885));
           if (pecas.indexOf(chave) < 0) pecas.push(chave);
           const cor = pecas.indexOf(chave) % 8;
           const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">${emojiDaUnidade(L.unidade)}</div>`;
