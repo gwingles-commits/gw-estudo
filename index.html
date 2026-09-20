@@ -808,7 +808,12 @@
         html += `<section class="licao-bloco"><div class="licao-cab">${icone}
           <div><h3>${L.unidade}</h3><small>${(L.palavras || []).slice(0, 8).join(' · ')}</small></div></div><div class="kids-grid">`;
         const pecas = [];
-        (L.videos || []).forEach(v => {
+        // LET'S DRAW: vídeo de desenhar (888) e folha de desenhar (889) têm seção própria, depois dos jogos
+        // só as folhas de DESENHAR de verdade (as de traçar letra ficam em Folhas para imprimir)
+        const DESENHO_TIPOS = /^(DESENHAR_3_PASSOS|DRAW_WITH_SHAPES|DESENHAR_LIVRE|TRACAR_LINHA|TRACAR_METADE)$/i;
+        const videosDesenho = (L.videos || []).filter(v => v.tipo === 'desenho');
+        const folhasDesenho = (L.folhas || []).filter(f => DESENHO_TIPOS.test(f.frente || '') || DESENHO_TIPOS.test(f.verso || ''));
+        (L.videos || []).filter(v => v.tipo !== 'desenho').forEach(v => {
           const t = TIPO[v.tipo] || TIPO.chant;
           const chave = v.tipo === 'quiz' ? 'q' + (v.linha868 || v.linha885) : (v.tipo === 'desenho' ? 'd' + v.linha888 : String(v.linha885));
           if (pecas.indexOf(chave) < 0) pecas.push(chave);
@@ -840,6 +845,26 @@
               <div class="semficha">🕵️</div><div class="rotulo">Misterioso</div></div>`;
           html += `</div>`;
         }
+        // LET'S DRAW! — os vídeos de desenhar passo a passo e as folhas de desenhar da 889
+        if (videosDesenho.length || folhasDesenho.length) {
+          html += `<div class="secao-tit">🖍️ Let's draw!</div>`;
+          if (videosDesenho.length) {
+            html += `<div class="kids-grid">`;
+            videosDesenho.forEach((v, i) => {
+              const img = v.icone ? `<img src="${v.icone}" alt="">` : `<div class="semficha">🖍️</div>`;
+              html += `<div class="vcard vc-desenho pc-${i % 8}" onclick="openPlayer('${ytId(v.youtube) || ''}')"><div class="tipo">🖍️</div>${img}<div class="rotulo">${v.titulo}</div></div>`;
+            });
+            html += `</div>`;
+          }
+          if (folhasDesenho.length) {
+            html += `<div class="folhas" style="margin-top:10px">`;
+            const nomeTipo = t => String(t || '').toLowerCase().replace(/_/g, ' ');
+            folhasDesenho.forEach(f => {
+              html += `<a class="folha" href="${f.link}" target="_blank" rel="noopener"><span class="ic">🖍️</span><div><b>${(f.palavras || []).join(' + ')}</b><small>${nomeTipo(f.frente)}${f.verso ? ' · verso: ' + nomeTipo(f.verso) : ''}</small></div></a>`;
+            });
+            html += `</div>`;
+          }
+        }
         // ATELIÊ: pintar e traçar cada palavra que tem SVG na 883
         const at = L.atelier || [];
         if (at.length) {
@@ -852,7 +877,7 @@
           html += `</div>`;
         }
         // FOLHAS da 889 para imprimir (quem abre é o pai ou a professora)
-        const fo = L.folhas || [];
+        const fo = (L.folhas || []).filter(f => folhasDesenho.indexOf(f) < 0);
         if (fo.length) {
           html += `<div class="secao-tit">🖨️ Folhas para imprimir</div><div class="folhas">`;
           fo.forEach(f => {
