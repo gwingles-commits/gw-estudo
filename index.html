@@ -310,14 +310,14 @@
     #roleta .topo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
     #roleta .topo .kids-back { width: 56px; height: 56px; font-size: 1.7rem; }
     #roleta .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
-    /* Em pé (celular): placar em cima, roda embaixo. Deitado (TV): BOYS | roda | GIRLS, e a roda pega a altura toda. [2026-09-16] */
+    /* Em pé (celular): placar em cima, roda embaixo. Deitado (TV): YELLOW | roda | BLUE, e a roda pega a altura toda. [2026-09-16] */
     #roleta .palco { flex: 1; position: relative; display: grid; grid-template-columns: 1fr; grid-template-areas: "placar" "roda"; justify-items: center; align-content: center; gap: 8px; min-height: 0; padding: 6px 12px; }
     #roleta .palco .placar-gw { grid-area: placar; width: 100%; padding: 0; }
     #roleta .roda { grid-area: roda; position: relative; width: min(92vw, calc(100vh - 330px)); aspect-ratio: 1 / 1; }
     @media (min-aspect-ratio: 5/4) {
-      #roleta .palco { grid-template-columns: 1fr auto 1fr; grid-template-areas: "boys roda girls"; align-items: center; gap: 16px; }
+      #roleta .palco { grid-template-columns: 1fr auto 1fr; grid-template-areas: "yellow roda blue"; align-items: center; gap: 16px; }
       #roleta .palco .placar-gw { display: contents; }
-      #roleta .palco .time.boys { grid-area: boys; } #roleta .palco .time.girls { grid-area: girls; }
+      #roleta .palco .time.yellow { grid-area: yellow; } #roleta .palco .time.blue { grid-area: blue; }
       #roleta .palco .time { width: 100%; }
       #roleta .roda { width: min(48vw, calc(100vh - 190px)); }
       #roleta .girar { margin: 4px auto 12px; padding: 12px 40px; font-size: 1.4rem; }
@@ -397,7 +397,7 @@
       .cartela .marca img { height: 7mm; width: auto; }
     }
 
-    /* ── LOUSA MÁGICA: boys x girls, a TV desenha a palavra e a turma copia na lousa ──
+    /* ── LOUSA MÁGICA: yellow x blue, a TV desenha a palavra e a turma copia na lousa ──
        A TV diz "Let's draw a... cow!", o traço aparece sozinho (o SVG_Colorir da 883
        desenhado com stroke-dashoffset, sem vídeo), pisca, fica, e a palavra aparece
        embaixo. Quem terminou primeiro ganha o ponto; a professora toca no time e sai a
@@ -411,7 +411,7 @@
     #lousa .time { position: relative; border-radius: 22px; color: #fff; text-align: center; padding: 8px 6px 10px; cursor: pointer; user-select: none;
       -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 16px rgba(45,27,107,.15); transition: transform .12s; }
     #lousa .time:active { transform: scale(.97); }
-    #lousa .time.boys { background: #3BADE8; } #lousa .time.girls { background: #FF6B9D; }
+    #lousa .time.yellow { background: #FFC629; color: #2D1B6B; } #lousa .time.yellow .menos { color: #2D1B6B; } #lousa .time.blue { background: #3BADE8; }
     #lousa .time .nome { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; letter-spacing: .06em; }
     #lousa .time .pts { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(2.6rem, 9vw, 4rem); line-height: 1; }
     #lousa .time .menos { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
@@ -451,7 +451,7 @@
     #misterio .time { position: relative; border-radius: 22px; color: #fff; text-align: center; padding: 8px 6px 10px; cursor: pointer; user-select: none;
       -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 16px rgba(45,27,107,.15); transition: transform .12s; }
     #misterio .time:active { transform: scale(.97); }
-    #misterio .time.boys { background: #3BADE8; } #misterio .time.girls { background: #FF6B9D; }
+    #misterio .time.yellow { background: #FFC629; color: #2D1B6B; } #misterio .time.yellow .menos { color: #2D1B6B; } #misterio .time.blue { background: #3BADE8; }
     #misterio .time .nome { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; letter-spacing: .06em; }
     #misterio .time .pts { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(2.6rem, 9vw, 4rem); line-height: 1; }
     #misterio .time .menos { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
@@ -481,12 +481,13 @@
     #misterio .fim .txt { font-family: 'Baloo 2', cursive; font-size: 2.4rem; font-weight: 800; }
     #misterio .fim .sub { font-family: 'Baloo 2', cursive; font-size: 1.4rem; color: #9b8fc4; }
 
-    /* ── PLACAR BOYS × GIRLS genérico: o mesmo bloco serve Roleta, Qual é?, Lousa e Misterioso ── [2026-09-16] */
+    /* ── PLACAR YELLOW × BLUE genérico: o mesmo bloco serve Roleta, Qual é?, Lousa e Misterioso ── [2026-09-16]
+       [2026-10-13] Era BOYS × GIRLS; virou YELLOW × BLUE para o Jardim da Santa Maria. Amarelo leva letra escura: branco no amarelo some na TV. */
     .placar-gw { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px; }
     .placar-gw .time { position: relative; border-radius: 22px; color: #fff; text-align: center; padding: 8px 6px 10px; cursor: pointer; user-select: none;
       -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 16px rgba(45,27,107,.15); transition: transform .12s; }
     .placar-gw .time:active { transform: scale(.97); }
-    .placar-gw .time.boys { background: #3BADE8; } .placar-gw .time.girls { background: #FF6B9D; }
+    .placar-gw .time.yellow { background: #FFC629; color: #2D1B6B; } .placar-gw .time.yellow .menos { color: #2D1B6B; } .placar-gw .time.blue { background: #3BADE8; }
     .placar-gw .time .nome { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.3rem; letter-spacing: .06em; }
     .placar-gw .time .pts { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(2.6rem, 9vw, 4rem); line-height: 1; }
     .placar-gw .time .menos { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,.35); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
@@ -525,8 +526,8 @@
 <div id="misterio">
   <div class="topo"><a class="kids-back" href="#" onclick="closeMisterio();return false" aria-label="Voltar">←</a><h2>🕵️ Desenho Misterioso</h2><div class="rodada" id="msRodada"></div></div>
   <div class="placar">
-    <div class="time boys" id="msBoys" onclick="pontoMisterio('boys')"><button class="menos" onclick="event.stopPropagation();tirarPontoMisterio('boys')" aria-label="Tirar ponto">−</button><div class="nome">BOYS</div><div class="pts" id="msPtsBoys">0</div></div>
-    <div class="time girls" id="msGirls" onclick="pontoMisterio('girls')"><button class="menos" onclick="event.stopPropagation();tirarPontoMisterio('girls')" aria-label="Tirar ponto">−</button><div class="nome">GIRLS</div><div class="pts" id="msPtsGirls">0</div></div>
+    <div class="time yellow" id="msYellow" onclick="pontoMisterio('yellow')"><button class="menos" onclick="event.stopPropagation();tirarPontoMisterio('yellow')" aria-label="Tirar ponto">−</button><div class="nome">YELLOW</div><div class="pts" id="msPtsYellow">0</div></div>
+    <div class="time blue" id="msBlue" onclick="pontoMisterio('blue')"><button class="menos" onclick="event.stopPropagation();tirarPontoMisterio('blue')" aria-label="Tirar ponto">−</button><div class="nome">BLUE</div><div class="pts" id="msPtsBlue">0</div></div>
   </div>
   <div class="palco"><div class="quadro" id="msQuadro"><div class="vazio">🕵️</div></div><div class="palavra" id="msPalavra"></div></div>
   <div class="acoes"><button class="olho" id="msOlho" onclick="revelarMisterio(false)" aria-label="Revelar" disabled>👁️</button><button class="ir" id="msIr" onclick="rodadaMisterio()">WHAT IS IT?</button></div>
@@ -537,8 +538,8 @@
 <div id="lousa">
   <div class="topo"><a class="kids-back" href="#" onclick="closeLousa();return false" aria-label="Voltar">←</a><h2>🖍️ Lousa Mágica</h2><div class="rodada" id="lsRodada"></div></div>
   <div class="placar">
-    <div class="time boys" id="lsBoys" onclick="pontoLousa('boys')"><button class="menos" onclick="event.stopPropagation();tirarPontoLousa('boys')" aria-label="Tirar ponto">−</button><div class="nome">BOYS</div><div class="pts" id="lsPtsBoys">0</div></div>
-    <div class="time girls" id="lsGirls" onclick="pontoLousa('girls')"><button class="menos" onclick="event.stopPropagation();tirarPontoLousa('girls')" aria-label="Tirar ponto">−</button><div class="nome">GIRLS</div><div class="pts" id="lsPtsGirls">0</div></div>
+    <div class="time yellow" id="lsYellow" onclick="pontoLousa('yellow')"><button class="menos" onclick="event.stopPropagation();tirarPontoLousa('yellow')" aria-label="Tirar ponto">−</button><div class="nome">YELLOW</div><div class="pts" id="lsPtsYellow">0</div></div>
+    <div class="time blue" id="lsBlue" onclick="pontoLousa('blue')"><button class="menos" onclick="event.stopPropagation();tirarPontoLousa('blue')" aria-label="Tirar ponto">−</button><div class="nome">BLUE</div><div class="pts" id="lsPtsBlue">0</div></div>
   </div>
   <div class="palco"><div class="quadro" id="lsQuadro"><div class="vazio">🖍️</div><div class="lapis" id="lsLapis">✏️</div></div><div class="palavra" id="lsPalavra"></div></div>
   <div class="acoes"><button class="ouvir" onclick="ouvirLousa()" aria-label="Ouvir">🔊</button><button class="ir" id="lsIr" onclick="rodadaLousa()">LET'S DRAW!</button></div>
@@ -943,14 +944,14 @@
 
 
   /* ── DESENHO MISTERIOSO ── */
-  const MS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, fase: 'parado', ctl: null, sus: null };
+  const MS = { fila: [], atual: null, yellow: 0, blue: 0, rodada: 0, total: 0, fase: 'parado', ctl: null, sus: null };
   function openMisterio() {
     if (LOUSA_ITENS.length < 2) return;
-    MS.fila = embaralhar(LOUSA_ITENS); MS.total = MS.fila.length; MS.rodada = 0; MS.boys = 0; MS.girls = 0; MS.atual = null; MS.fase = 'parado';
+    MS.fila = embaralhar(LOUSA_ITENS); MS.total = MS.fila.length; MS.rodada = 0; MS.yellow = 0; MS.blue = 0; MS.atual = null; MS.fase = 'parado';
     const faltam = LOUSA_ITENS.filter(x => !LS.svgs[x.id] && !LS.simples[x.id]).map(x => x.id);
     if (faltam.length) fetch('https://n8n.gwingles.com/webhook/gw-tracos?ids=' + faltam.join(',')).then(r => r.json())
       .then(d => { Object.assign(LS.svgs, (d && d.tracos) || {}); Object.assign(LS.simples, (d && d.simples) || {}); }).catch(() => {});
-    document.getElementById('msPtsBoys').textContent = '0'; document.getElementById('msPtsGirls').textContent = '0';
+    document.getElementById('msPtsYellow').textContent = '0'; document.getElementById('msPtsBlue').textContent = '0';
     document.getElementById('msQuadro').innerHTML = '<div class="vazio">🕵️</div>';
     document.getElementById('msPalavra').textContent = ''; document.getElementById('msPalavra').className = 'palavra';
     document.getElementById('msRodada').textContent = '0 / ' + MS.total;
@@ -1029,33 +1030,33 @@
     if (!comPonto) somBoing();
   }
   function pontoMisterio(t) {
-    if (MS.fase === 'parado' || MS.fase === 'revelado') { if (MS.fase === 'revelado') { MS[t]++; document.getElementById(t === 'boys' ? 'msPtsBoys' : 'msPtsGirls').textContent = MS[t]; somTime(t); } return; }
-    MS[t]++; document.getElementById(t === 'boys' ? 'msPtsBoys' : 'msPtsGirls').textContent = MS[t];
-    const el = document.getElementById(t === 'boys' ? 'msBoys' : 'msGirls'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
+    if (MS.fase === 'parado' || MS.fase === 'revelado') { if (MS.fase === 'revelado') { MS[t]++; document.getElementById(t === 'yellow' ? 'msPtsYellow' : 'msPtsBlue').textContent = MS[t]; somTime(t); } return; }
+    MS[t]++; document.getElementById(t === 'yellow' ? 'msPtsYellow' : 'msPtsBlue').textContent = MS[t];
+    const el = document.getElementById(t === 'yellow' ? 'msYellow' : 'msBlue'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
     revelarMisterio(true); setTimeout(() => { somTime(t); festa(t, 'misterio', 'msConfete'); }, 700);
   }
-  function tirarPontoMisterio(t) { if (MS[t] > 0) { MS[t]--; document.getElementById(t === 'boys' ? 'msPtsBoys' : 'msPtsGirls').textContent = MS[t]; somBoing(); } }
+  function tirarPontoMisterio(t) { if (MS[t] > 0) { MS[t]--; document.getElementById(t === 'yellow' ? 'msPtsYellow' : 'msPtsBlue').textContent = MS[t]; somBoing(); } }
   function fimMisterio() {
-    pararMisterio(); const b = MS.boys, g = MS.girls; const txt = document.getElementById('msFimTxt');
-    if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); festa('boys', 'misterio', 'msConfete'); }
-    else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); festa('girls', 'misterio', 'msConfete'); }
+    pararMisterio(); const b = MS.yellow, g = MS.blue; const txt = document.getElementById('msFimTxt');
+    if (b > g) { txt.textContent = 'YELLOW WIN!'; txt.style.color = '#E0A800'; somTime('yellow'); festa('yellow', 'misterio', 'msConfete'); }
+    else if (g > b) { txt.textContent = 'BLUE WIN!'; txt.style.color = '#3BADE8'; somTime('blue'); festa('blue', 'misterio', 'msConfete'); }
     else { txt.textContent = 'EMPATE!'; txt.style.color = 'var(--purple)'; somPalmas(); }
-    document.getElementById('msFimSub').textContent = 'Boys ' + b + ' × ' + g + ' Girls';
+    document.getElementById('msFimSub').textContent = 'Yellow ' + b + ' × ' + g + ' Blue';
     document.getElementById('msFim').style.display = 'flex'; setTimeout(somPalmas, 1500);
   }
 
   /* ── LOUSA MÁGICA ── */
   let LOUSA_ITENS = [];
-  const LS = { fila: [], atual: null, boys: 0, girls: 0, rodada: 0, total: 0, ocupado: false, svgs: {}, simples: {}, anim: 0 };
+  const LS = { fila: [], atual: null, yellow: 0, blue: 0, rodada: 0, total: 0, ocupado: false, svgs: {}, simples: {}, anim: 0 };
   function openLousa() {
     if (LOUSA_ITENS.length < 2) return;
-    LS.fila = embaralhar(LOUSA_ITENS); LS.total = LS.fila.length; LS.rodada = 0; LS.boys = 0; LS.girls = 0; LS.atual = null; LS.ocupado = false;
+    LS.fila = embaralhar(LOUSA_ITENS); LS.total = LS.fila.length; LS.rodada = 0; LS.yellow = 0; LS.blue = 0; LS.atual = null; LS.ocupado = false;
     // baixa os traços antes, pelo /gw-tracos (o media do Baserow não abre CORS para o estudar):
     // na hora do "Let's draw" o desenho tem que sair na hora
     const faltam = LOUSA_ITENS.filter(x => !LS.svgs[x.id]).map(x => x.id);
     if (faltam.length) fetch('https://n8n.gwingles.com/webhook/gw-tracos?ids=' + faltam.join(',')).then(r => r.json())
       .then(d => { Object.assign(LS.svgs, (d && d.tracos) || {}); Object.assign(LS.simples, (d && d.simples) || {}); }).catch(() => {});
-    document.getElementById('lsPtsBoys').textContent = '0'; document.getElementById('lsPtsGirls').textContent = '0';
+    document.getElementById('lsPtsYellow').textContent = '0'; document.getElementById('lsPtsBlue').textContent = '0';
     document.getElementById('lsQuadro').innerHTML = '<div class="vazio">🖍️</div><div class="lapis" id="lsLapis">✏️</div>';
     document.getElementById('lsPalavra').textContent = ''; document.getElementById('lsPalavra').className = 'palavra';
     document.getElementById('lsRodada').textContent = '0 / ' + LS.total;
@@ -1065,10 +1066,11 @@
     document.body.style.overflow = 'hidden'; history.pushState({ lousa: 1 }, '');
   }
   function closeLousa() { document.getElementById('lousa').style.display = 'none'; document.body.style.overflow = ''; cancelAnimationFrame(LS.anim); corridaLousa(false); if (AUDIO_ATUAL) AUDIO_ATUAL.pause(); }
-  function somTime(t) { const u = SFX.lousa && SFX.lousa[t]; if (u) { try { const a = new Audio(u); a.volume = 0.85; a.play().catch(() => {}); } catch (e) {} } else somPalmas(); }
+  // os arquivos da torcida (885/29) ainda se chamam lousa_boys/lousa_girls; os dois só dizem "Yay!", então servem aos times de cor. [2026-10-13]
+  function somTime(t) { const u = SFX.lousa && SFX.lousa[{ yellow: 'boys', blue: 'girls' }[t]]; if (u) { try { const a = new Audio(u); a.volume = 0.85; a.play().catch(() => {}); } catch (e) {} } else somPalmas(); }
   function pontoLousa(t) {
-    LS[t]++; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t];
-    const el = document.getElementById(t === 'boys' ? 'lsBoys' : 'lsGirls'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
+    LS[t]++; document.getElementById(t === 'yellow' ? 'lsPtsYellow' : 'lsPtsBlue').textContent = LS[t];
+    const el = document.getElementById(t === 'yellow' ? 'lsYellow' : 'lsBlue'); el.classList.remove('pulo'); void el.offsetWidth; el.classList.add('pulo');
     corridaLousa(false); somTime(t); festaLousa(t);
   }
   // A FESTA DO PONTO: a tela treme e chove confete na cor do time (canvas, sem biblioteca), 2 s.
@@ -1077,8 +1079,8 @@
   function festa(t, telaId, canvasId) {
     const tela = document.getElementById(telaId); tela.classList.remove('treme'); void tela.offsetWidth; tela.classList.add('treme');
     const cv = document.getElementById(canvasId); const r = cv.getBoundingClientRect(); cv.width = r.width; cv.height = r.height;
-    const ctx = cv.getContext('2d'); const cores = t === 'boys' ? ['#3BADE8', '#1E7FC0', '#FFFFFF', '#FFD93D'] : ['#FF6B9D', '#E0407A', '#FFFFFF', '#FFD93D'];
-    const ox = t === 'boys' ? r.width * 0.25 : r.width * 0.75;
+    const ctx = cv.getContext('2d'); const cores = t === 'yellow' ? ['#FFC629', '#F2A900', '#FFFFFF', '#FFE680'] : ['#3BADE8', '#1E7FC0', '#FFFFFF', '#9FDCF7'];
+    const ox = t === 'yellow' ? r.width * 0.25 : r.width * 0.75;
     cancelAnimationFrame(CONF.anim); CONF.pts = [];
     for (let i = 0; i < 160; i++) { const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.6, v = 9 + Math.random() * 11;
       CONF.pts.push({ x: ox, y: r.height * 0.3, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, w: 6 + Math.random() * 8, h: 4 + Math.random() * 6, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.4, c: cores[i % cores.length], vida: 1 }); }
@@ -1091,7 +1093,7 @@
     };
     CONF.anim = requestAnimationFrame(passo);
   }
-  function tirarPontoLousa(t) { if (LS[t] > 0) { LS[t]--; document.getElementById(t === 'boys' ? 'lsPtsBoys' : 'lsPtsGirls').textContent = LS[t]; somBoing(); } }
+  function tirarPontoLousa(t) { if (LS[t] > 0) { LS[t]--; document.getElementById(t === 'yellow' ? 'lsPtsYellow' : 'lsPtsBlue').textContent = LS[t]; somBoing(); } }
   function ouvirLousa() { if (!LS.atual || !LS.atual.audio) return; tocar(LS.atual.audio); }
   // "Let's draw a..." abre a rodada; a PALAVRA (o mesmo `Audio EN` da Roleta e do Bingo) só sai
   // quando o desenho termina, junto com o texto -- quem reconhece pelo traço fala antes. [2026-09-16]
@@ -1180,12 +1182,12 @@
     LS.anim = requestAnimationFrame(passo);
   }
   function fimLousa() {
-    corridaLousa(false); const b = LS.boys, g = LS.girls;
+    corridaLousa(false); const b = LS.yellow, g = LS.blue;
     const txt = document.getElementById('lsFimTxt');
-    if (b > g) { txt.textContent = 'BOYS WIN!'; txt.style.color = '#3BADE8'; somTime('boys'); festaLousa('boys'); }
-    else if (g > b) { txt.textContent = 'GIRLS WIN!'; txt.style.color = '#FF6B9D'; somTime('girls'); festaLousa('girls'); }
+    if (b > g) { txt.textContent = 'YELLOW WIN!'; txt.style.color = '#E0A800'; somTime('yellow'); festaLousa('yellow'); }
+    else if (g > b) { txt.textContent = 'BLUE WIN!'; txt.style.color = '#3BADE8'; somTime('blue'); festaLousa('blue'); }
     else { txt.textContent = 'EMPATE!'; txt.style.color = 'var(--purple)'; somPalmas(); }
-    document.getElementById('lsFimSub').textContent = 'Boys ' + b + ' × ' + g + ' Girls';
+    document.getElementById('lsFimSub').textContent = 'Yellow ' + b + ' × ' + g + ' Blue';
     document.getElementById('lsFim').style.display = 'flex'; setTimeout(somPalmas, 1500);
   }
 
@@ -1268,14 +1270,14 @@
   }
 
 
-  /* ── PLACAR BOYS × GIRLS (genérico) ──
+  /* ── PLACAR YELLOW × BLUE (genérico) ──
      Um placar por jogo, guardado em PL[chave]. Tocar no time soma o ponto e faz a festa daquele time:
      torcida (885/29), confete na cor e tela tremendo. O "−" desfaz com boing. [2026-09-16] */
   const PL = {};
   function placarMontar(chave, elId, telaId, canvasId) {
-    PL[chave] = { boys: 0, girls: 0, telaId: telaId, canvasId: canvasId, elId: elId };
+    PL[chave] = { yellow: 0, blue: 0, telaId: telaId, canvasId: canvasId, elId: elId };
     const el = document.getElementById(elId);
-    el.innerHTML = ['boys', 'girls'].map(t => `<div class="time ${t}" id="${elId}_${t}" onclick="placarPonto('${chave}','${t}')">
+    el.innerHTML = ['yellow', 'blue'].map(t => `<div class="time ${t}" id="${elId}_${t}" onclick="placarPonto('${chave}','${t}')">
       <button class="menos" onclick="event.stopPropagation();placarTirar('${chave}','${t}')" aria-label="Tirar ponto">−</button>
       <div class="nome">${t.toUpperCase()}</div><div class="pts" id="${elId}_${t}_pts">0</div></div>`).join('');
   }
@@ -1286,7 +1288,7 @@
     somTime(t); festa(t, p.telaId, p.canvasId);
   }
   function placarTirar(chave, t) { const p = PL[chave]; if (!p || p[t] <= 0) return; p[t]--; document.getElementById(p.elId + '_' + t + '_pts').textContent = p[t]; somBoing(); }
-  function placarVencedor(chave) { const p = PL[chave]; if (!p) return ''; return p.boys > p.girls ? 'boys' : (p.girls > p.boys ? 'girls' : ''); }
+  function placarVencedor(chave) { const p = PL[chave]; if (!p) return ''; return p.yellow > p.blue ? 'yellow' : (p.blue > p.yellow ? 'blue' : ''); }
   // trilha genérica em loop (uma por vez), para o Qual é? e a Roleta
   let TRILHA = null;
   function trilha(lista, volume) {
@@ -1309,7 +1311,7 @@
     document.body.style.overflow = 'hidden'; history.pushState({ quale: 1 }, '');
     placarMontar('quale', 'qePlacar', 'quale', 'qeConfete');
     // o 🔊 mora entre os dois times, para as três fichas caberem inteiras embaixo
-    const boysEl = document.getElementById('qePlacar_boys'); boysEl.insertAdjacentHTML('afterend', '<button class="ouvir" onclick="tocarAlvo()" aria-label="Ouvir">🔊</button>');
+    const yellowEl = document.getElementById('qePlacar_yellow'); yellowEl.insertAdjacentHTML('afterend', '<button class="ouvir" onclick="tocarAlvo()" aria-label="Ouvir">🔊</button>');
     // a trilha do quiz (885/20) baixinha, clima de competição; para no fim
     trilha(SFX.quizbgm, 0.22);
     proximaRodada();
@@ -1318,7 +1320,7 @@
   function proximaRodada() {
     if (QE.rodada >= QE.total) {
       trilha(null); const v = placarVencedor('quale');
-      document.getElementById('qeFimTxt').textContent = v ? (v.toUpperCase() + ' WIN!  ' + PL.quale.boys + ' × ' + PL.quale.girls) : ('EMPATE!  ' + PL.quale.boys + ' × ' + PL.quale.girls);
+      document.getElementById('qeFimTxt').textContent = v ? (v.toUpperCase() + ' WIN!  ' + PL.quale.yellow + ' × ' + PL.quale.blue) : ('EMPATE!  ' + PL.quale.yellow + ' × ' + PL.quale.blue);
       document.getElementById('qeFim').style.display = 'flex'; somDing(); setTimeout(() => { if (v) { somTime(v); festa(v, 'quale', 'qeConfete'); } else somPalmas(); }, 400); return; }
     QE.alvo = QE.fila[QE.rodada]; QE.travado = false;
     const outras = embaralhar(QE.fichas.filter(f => f.id !== QE.alvo.id)).slice(0, 2);
