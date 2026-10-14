@@ -1392,10 +1392,11 @@
     ctx.beginPath(); ctx.arc(cx, cy, R * 0.09, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#6C3FC5'; ctx.lineWidth = 6; ctx.stroke();
   }
   /* [2026-10-13] A roda não repete: sorteia só entre as fichas que faltam, e a que já saiu fica
-     clarinha. Quando todas saíram, o próximo GIRAR! devolve a cor a todas. Às vezes (35 %, e só
-     quando a sorteada tem uma clarinha do lado) a roda para em cima da clarinha, segura e anda uma
-     fatia até a nova: o "quase" é teatro, a roda nunca cai de verdade na repetida. Pedido do Rodrigo:
-     em sala ela caía no mesmo bicho, e ficha já revelada não tem o que adivinhar. */
+     clarinha. Quando todas saíram, o próximo GIRAR! devolve a cor a todas. Às vezes (metade das vezes
+     em que a fatia logo antes da sorteada é clarinha) entra o "quase": a roda vem freando como se fosse
+     parar na clarinha e, sem parar, continua devagarzinho até a nova. É teatro, a roda nunca cai de
+     verdade na repetida. Pedido do Rodrigo: em sala ela caía no mesmo bicho, e ficha já revelada não
+     tem o que adivinhar; a 1ª versão parava na clarinha e depois andava, e ficou estranho. */
   function girar() {
     if (ROL.girando || ROL.itens.length < 2) return;
     // GIRAR! é o único botão: fecha a ficha revelada e já gira de novo
@@ -1405,32 +1406,37 @@
     ROL.girando = true; document.getElementById('rolGirar').disabled = true;
     const faltam = []; for (let i = 0; i < n; i++) if (!ROL.usados.has(i)) faltam.push(i);
     const alvo = faltam[Math.floor(Math.random() * faltam.length)];
-    const vizUsados = [(alvo + n - 1) % n, (alvo + 1) % n].filter(i => i !== alvo && ROL.usados.has(i));
-    const quase = vizUsados.length && Math.random() < 0.35 ? vizUsados[Math.floor(Math.random() * vizUsados.length)] : -1;
-    const paraEm = quase >= 0 ? quase : alvo;
-    // o ponteiro esta em cima (-90 graus): o meio da fatia 'paraEm' tem que parar ali
-    const centro = paraEm * fatia + fatia / 2;
+    // a roda gira com o índice no ponteiro descendo: a fatia que passa logo antes da 'alvo' é a alvo + 1
+    const antes = (alvo + 1) % n;
+    const quase = antes !== alvo && ROL.usados.has(antes) && Math.random() < 0.5;
+    // o ponteiro esta em cima (-90 graus): o meio da fatia 'alvo' tem que parar ali
+    const centro = alvo * fatia + fatia / 2;
     const voltas = 5 + Math.floor(Math.random() * 3);
-    const folga = quase >= 0 ? 0.2 : 0.5; // no "quase" para bem no meio da clarinha, para a turma ver
-    const angFinal = -Math.PI / 2 - centro + voltas * Math.PI * 2 + (Math.random() - 0.5) * fatia * folga;
+    const angFinal = -Math.PI / 2 - centro + voltas * Math.PI * 2 + (Math.random() - 0.5) * fatia * (quase ? 0.2 : 0.5);
     ac(); ROL.ang = ROL.ang % (Math.PI * 2); // mesma posição na tela; sem isso, depois de muitos giros a roda voltaria para trás
-    girarAte(angFinal, 4200, () => {
-      if (quase < 0) { mostrarResultado(alvo); return; }
-      // segura na clarinha e anda uma fatia (para frente ou para trás) até a ficha nova
-      const lado = (alvo - quase + n) % n === 1 ? 1 : -1;
-      setTimeout(() => girarAte(ROL.ang - lado * fatia, 650, () => mostrarResultado(alvo)), 750);
-    });
+    if (quase) girarAte(angFinal, 4200, () => mostrarResultado(alvo), fatia, 1600);
+    else girarAte(angFinal, 4200, () => mostrarResultado(alvo));
   }
-  // anima a roda do ângulo atual até 'angFinal', desacelerando, com um tique por fatia que passa no ponteiro
-  function girarAte(angFinal, dur, fim) {
+  // Anima a roda do ângulo atual até 'angFinal', desacelerando, com um tique por fatia que passa no ponteiro.
+  // Com 'cauda' (um ângulo) e 'msCauda': a roda chega ao começo da cauda ainda andando devagar, sem parar,
+  // e percorre a cauda freando até zero. As duas partes casam a velocidade, então o olho vê um giro só.
+  function girarAte(angFinal, dur, fim, cauda, msCauda) {
     const n = ROL.itens.length, fatia = Math.PI * 2 / n;
-    const ini = ROL.ang, delta = angFinal - ini, t0 = performance.now();
+    const ini = ROL.ang, t0 = performance.now();
+    const c = cauda || 0, tc = c ? msCauda : 0;
+    const v1 = c ? 2 * c / tc : 0;          // velocidade na entrada da cauda (rad/ms)
+    const d1 = angFinal - c - ini;           // distância da parte rápida
+    const pos = t => {
+      if (t < dur) { const k = t / dur; return ini + v1 * t + (d1 - v1 * dur) * (1 - Math.pow(1 - k, 3)); }
+      if (!tc) return angFinal;
+      const u = Math.min(t - dur, tc); return ini + d1 + v1 * u - v1 * u * u / (2 * tc);
+    };
     let ultimaFatia = Math.floor(ini / fatia);
-    const passo = t => {
-      const k = Math.min((t - t0) / dur, 1), e = 1 - Math.pow(1 - k, 3);
-      ROL.ang = ini + delta * e; desenharRoda();
+    const passo = now => {
+      const t = Math.min(now - t0, dur + tc);
+      ROL.ang = pos(t); desenharRoda();
       const fat = Math.floor(ROL.ang / fatia); if (fat !== ultimaFatia) { ultimaFatia = fat; somTick(); }
-      if (k < 1) requestAnimationFrame(passo); else fim();
+      if (t < dur + tc) requestAnimationFrame(passo); else fim();
     };
     requestAnimationFrame(passo);
   }
