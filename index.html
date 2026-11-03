@@ -904,6 +904,11 @@
       loading();
       show('videos-page');
       window.scrollTo(0, 0);
+      // [2026-11-03] &jogo= abre o jogo direto: o Modo aula da Santa tem um cartao por jogo no Jardim.
+      // So abre se o cartao do jogo foi desenhado (a licao tem o insumo); se nao, fica na licao.
+      const JOGO_DIRETO = { roleta: 'openRoleta', quale: 'openQuale', bingo: 'openBingo', lousa: 'openLousa', misterio: 'openMisterio' };
+      const jg = L && JOGO_DIRETO[params().get('jogo') || ''];
+      if (jg && document.querySelector(`#videos-page [onclick="${jg}()"]`)) window[jg]();
     } catch(err) {
       loading();
       show('error-box');
