@@ -906,9 +906,17 @@
       window.scrollTo(0, 0);
       // [2026-11-03] &jogo= abre o jogo direto: o Modo aula da Santa tem um cartao por jogo no Jardim.
       // So abre se o cartao do jogo foi desenhado (a licao tem o insumo); se nao, fica na licao.
-      const JOGO_DIRETO = { roleta: 'openRoleta', quale: 'openQuale', bingo: 'openBingo', lousa: 'openLousa', misterio: 'openMisterio' };
+      // Dentro da Santa (iframe com &santa=1) o ← da licao e o ← do jogo aberto direto voltam para o Modo aula,
+      // em vez de cair na lista do estudar (Maternal, Jardim...): a Santa escuta o 'gw-voltar' e navega ela mesma.
+      const NA_SANTA = params().get('santa') === '1' && window.parent !== window;
+      const voltarSanta = () => window.parent.postMessage('gw-voltar', '*');
+      if (NA_SANTA && L) { const b = document.querySelector('#videos-page .kids-back'); if (b) b.onclick = e => { e.preventDefault(); voltarSanta(); }; const hd = document.querySelector('body > header'); if (hd) hd.style.display = 'none'; }
+      const JOGO_DIRETO = { roleta: ['openRoleta', 'closeRoleta'], quale: ['openQuale', 'closeQuale'], bingo: ['openBingo', 'closeBingo'], lousa: ['openLousa', 'closeLousa'], misterio: ['openMisterio', 'closeMisterio'] };
       const jg = L && JOGO_DIRETO[params().get('jogo') || ''];
-      if (jg && document.querySelector(`#videos-page [onclick="${jg}()"]`)) window[jg]();
+      if (jg && document.querySelector(`#videos-page [onclick="${jg[0]}()"]`)) {
+        if (NA_SANTA) { const fechar = window[jg[1]]; window[jg[1]] = function () { fechar(); voltarSanta(); }; }
+        window[jg[0]]();
+      }
     } catch(err) {
       loading();
       show('error-box');
