@@ -504,6 +504,17 @@
     #draw .topo h2 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: var(--purple); }
     #draw .corpo { flex: 1; overflow-y: auto; padding: 4px 14px 30px; }
     .vc-desenho .tipo { background: #E0533B; }
+    /* [2026-11-10] Rumo ao Show: cartao de entrada no Maternal, J1 e J2 e a pagina em tela cheia (servida pelo robo.gwingles.com/show) */
+    .show-card{display:flex;align-items:flex-end;gap:12px;margin:0 0 18px;padding:16px 16px 0;border-radius:24px;text-decoration:none;color:#2D1B6B;background:linear-gradient(160deg,#A0D6FA,#D7BEEB);box-shadow:0 8px 24px rgba(45,27,107,.18);overflow:hidden;min-height:150px}
+    .show-card img{height:150px;flex:none;filter:drop-shadow(0 8px 10px rgba(45,27,107,.25))}
+    .show-card .t{padding-bottom:16px}
+    .show-card b{display:block;font-size:26px;line-height:1.05;font-weight:900}
+    .show-card .dias{display:inline-block;margin-top:8px;background:#fff;border-radius:999px;padding:4px 12px;font-weight:900;font-size:15px}
+    .show-card .play{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#FFC629;margin-left:8px;vertical-align:middle}
+    .show-card .play:after{content:"";border-left:14px solid #2D1B6B;border-top:9px solid transparent;border-bottom:9px solid transparent;margin-left:4px}
+    #show-overlay{position:fixed;inset:0;z-index:9999;background:#FFF8EE}
+    #show-overlay iframe{width:100%;height:100%;border:0;display:block}
+    #show-overlay .voltar{position:fixed;top:12px;left:12px;z-index:10000;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.92);color:#2D1B6B;font-size:24px;font-weight:900;display:grid;place-items:center;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
   </style>
 </head>
 <body>
@@ -891,6 +902,11 @@
           <span class="emoji">${emoji}</span><h2>${nome}</h2></div>`;
         if (!licoes.length) {
           html += `<div class="kids-vazio"><span class="emoji">🎬</span>Os vídeos desta turma estão chegando!</div>`;
+        }
+        // [2026-11-10] Rumo ao Show (danca Can't Stop the Feeling): so no Maternal e no Jardim
+        if (['M','J1','J2'].includes(serie)) {
+          const diasShow = Math.max(0, Math.ceil((new Date('2026-12-08T09:00:00-03:00') - new Date()) / 864e5));
+          html += `<a class="show-card" href="?show=1&volta=${serie}"><img src="https://robo.gwingles.com/show/avatar.png" alt=""><div class="t"><b>Rumo<br>ao Show</b><span class="dias">${diasShow} dias</span><span class="play"></span></div></a>`;
         }
         html += `<div class="lcards">`;
         licoes.forEach(x => {
@@ -2075,5 +2091,16 @@
       navigator.serviceWorker.register('/sw.js');
     }
   </script>
+<script>
+// [2026-11-10] ?show=1 abre a pagina Rumo ao Show em tela cheia por cima do app; o ← volta para a turma de onde veio.
+(function(){
+  const q=new URLSearchParams(location.search); if(!q.has('show')) return;
+  const volta=(q.get('volta')||'').replace(/[^A-Z0-9]/gi,'');
+  const o=document.createElement('div'); o.id='show-overlay';
+  o.innerHTML='<iframe src="https://robo.gwingles.com/show/" allow="autoplay; fullscreen" allowfullscreen title="Rumo ao Show"></iframe>'+
+    '<a class="voltar" href="'+(volta?'?videos='+volta:'?')+'" aria-label="Voltar">←</a>';
+  document.body.appendChild(o); document.body.style.overflow='hidden';
+})();
+</script>
 </body>
 </html>
